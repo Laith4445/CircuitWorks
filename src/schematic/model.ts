@@ -14,10 +14,12 @@ export interface Part {
   x: number;
   y: number;
   rot: Rotation;
+  /** Mirrored left-right (before rotation). */
+  flip?: boolean;
   params?: Record<string, string>;
 }
 
-export interface Wire { from: Point; to: Point }
+export interface Wire { from: Point; to: Point; id?: string }
 
 export interface Probe {
   id: string;
@@ -25,6 +27,8 @@ export interface Probe {
   nodeAt?: Point;
   refAt?: Point;
   element?: string;
+  /** Current probes: +1 = pin a -> pin b (the element's own direction), -1 = flipped. */
+  dir?: 1 | -1;
   label?: string;
 }
 
@@ -73,7 +77,7 @@ export function pinPositions(part: Part): PinPos[] {
   const defs = PIN_TABLE[part.type];
   if (!defs) throw new Error(`Unknown part type "${part.type}" on ${part.id}.`);
   return defs.map((d) => {
-    const [rx, ry] = rotate(d.dx, d.dy, part.rot ?? 0);
+    const [rx, ry] = rotate(part.flip ? -d.dx : d.dx, d.dy, part.rot ?? 0);
     return { name: d.name, x: part.x + rx, y: part.y + ry };
   });
 }

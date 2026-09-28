@@ -1,0 +1,77 @@
+/** Run bar: the three analyses as tabs with their parameters inline, Run, Share, undo/redo, examples. */
+import type { AnalysisJson } from '../schematic/model';
+import { describeValue } from '../engine/units';
+import type { Action } from './state';
+
+export interface RunBarProps {
+  analysis: AnalysisJson;
+  dispatch: (a: Action) => void;
+  onRun: () => void;
+  onShare: () => void;
+  onFit: () => void;
+  onNew: () => void;
+  onExport: () => void;
+  onImport: (file: File) => void;
+  onLoadExample: (id: string) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  status: { kind: 'ok' | 'error' | 'info'; text: string } | null;
+  fixGround: (() => void) | null;
+  examples: { id: string; title: string }[];
+}
+
+function Field({ label, value, unit, onChange }: { label: string; value: string; unit: string; onChange: (v: string) => void }) {
+  let hint = '';
+  try { hint = describeValue(value, unit); } catch { hint = '?'; }
+  return (
+    <label className="runfield" title={hint}>
+      <span>{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} size={7} />
+    </label>
+  );
+}
+
+export function RunBar(p: RunBarProps) {
+  const a = p.analysis;
+  const setA = (analysis: AnalysisJson) => p.dispatch({ type: 'setAnalysis', analysis });
+  const tab = (kind: AnalysisJson['kind']) => {
+    if (kind === a.kind) return;
+    if (kind === 'dc') setA({ kind: 'dc' });
+    if (kind === 'tran') setA({ kind: 'tran', tEnd: '10ms' });
+    if (kind === 'ac') setA({ kind: 'ac', fStart: '10', fStop: '1MEG', pointsPerDecade: 100, log: true });
+  };
+  return (
+    <div className="runbar">
+      <div className="tabs">
+        <button className={a.kind === 'dc' ? 'active' : ''} onClick={() => tab('dc')}>DC</button>
+        <button className={a.kind === 'tran' ? 'active' : ''} onClick={() => tab('tran')}>Time</button>
+        <button className={a.kind === 'ac' ? 'active' : ''} onClick={() => tab('ac')}>Frequency</button>
+      </div>
+      {a.kind === 'dc' && <span className="muted">DC operating point</span>}
+      {a.kind === 'tran' && <Field label="End time" value={a.tEnd} unit="s" onChange={(v) => setA({ ...a, tEnd: v })} />}
+      {a.kind === 'ac' && (
+        <>
+          <Field label="From" value={a.fStart} unit="Hz" onChange={(v) => setA({ ...a, fStart: v })} />
+          <Field label="To" value={a.fStop} unit="Hz" onChange={(v) => setA({ ...a, fStop: v })} />
+        </>
+      )}
+      <button className="run" onClick={p.onRun} title="Run (Ctrl/⌘+Enter)">▶ Run</button>
+      <span className={`status ${p.status?.kind ?? ''}`}>
+        {p.status?.text}
+        {p.fixGround && <button className="link" onClick={p.fixGround}>Add ground at the lowest point?</button>}
+      </span>
+      <span className="spacer" />
+      <button onClick={() => p.dispatch({ type: 'undo' })} disabled={!p.canUndo} title="Undo (Ctrl/⌘+Z)">↶</button>
+      <button onClick={() => p.dispatch({ type: 'redo' })} disabled={!p.canRedo} title="Redo (Ctrl/⌘+Shift+Z)">↷</button>
+      <button onClick={p.onFit} title="Fit drawing to window (0)">Fit</button>
+      <select value="" onChange={(e) => { if (e.target.value) p.onLoadExample(e.target.value); }} title="Load a book exercise">
+        <option value="">Examples…</option>
+        {p.examples.map((ex) => <option key={ex.id} value={ex.id}>{ex.id} — {ex.title}</option>)}
+      </select>
+      <button onClick={p.onNew} title="Start a blank drawing">New</button>
+      <button onClick={p.onExport} title="Save the circuit as a .json file">Save file</button>
+      <label className="filebtn" title="Open a saved .json circuit">Open file<input type="file" accept=".json,application/json" onChange={(e) => { const f = e.target.files?.[0]; if (f) p.onImport(f); e.target.value = ''; }} /></label>
+      <button className="share" onClick={p.onShare} title="Copy a link to this circuit">Share ↗</button>
+    </div>
+  );
+}
