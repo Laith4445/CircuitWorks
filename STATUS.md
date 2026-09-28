@@ -1,6 +1,6 @@
 # STATUS.md — where CircuitWorks stands
 
-_Last updated: 2026-09-28 (session 2, milestones M1–M4)._
+_Last updated: 2026-09-28 (session 2, milestones M1–M5)._
 
 ## What works
 - **M0, the solver, is done and proven** (123 automated checks: every book value, plus
@@ -53,10 +53,17 @@ _Last updated: 2026-09-28 (session 2, milestones M1–M4)._
   table lists every probe **just before t = 0**, **just after**, and **at the
   end of the run**, which is exactly what the book's "find v_C(0⁻), i_L(0⁺),
   v_C(∞)" questions ask for.
+- **M5, power, is built.** A power probe dropped on a part reads the power it
+  absorbs. In the inspector, "Make it a wattmeter" gives it two voltage
+  terminals (W handles) you can drag to other points while it keeps sensing
+  the part's current, which is how the book's wattmeter is wired. In a Time
+  run a small table gives the **average power over whole cycles** at the end
+  of the run (the wattmeter reading); in a Frequency sweep a third panel plots
+  average power against frequency and the cursor table also shows reactive power.
 - The Self-Check page (`/#/selfcheck`) still shows 51 of 51 green.
 
 ## How to check it (plain language)
-1. In the project folder run `npm test` — expect **163 tests passed, 0 failed**.
+1. In the project folder run `npm test` — expect **166 tests passed, 0 failed**.
 2. Run `npm run dev` and open the address it prints (http://localhost:5173).
 3. **Build E1 from nothing:** press V, Space, click to place the source. Press R,
    Space, click, four times for the resistors. Press G, click, for the ground.
@@ -107,10 +114,17 @@ answer back.
    run repeats by itself with the opposite story (v_C now starts at −654 mV).
    Double-click again to put it back.
 
-## What's next (M5 — Power)
-Power probes already read in DC. M5 adds the wattmeter reading of average
-power in a Time run, power as a plotted quantity in a Frequency sweep, and the
-E7 check that both methods agree.
+## How to check M5
+1. Examples… → **E7**, press Run (Frequency, 100 kHz–1 GHz). The plot shows
+   average power in the load against frequency. Zoom (mouse wheel) around
+   1 MHz and hover until f reads 1.000 MHz: P_load = **438.5 nW**.
+2. Click the **Time** tab, set End time to `20us`, press ⌘Enter. The wattmeter
+   table reads about **438.6 nW**, averaged over 10 whole cycles (10–20 µs).
+   The two methods agree within 1 %, as EXERCISES.md requires.
+
+## What's next (M6 — Polish for a first outside look)
+Onboarding overlay, keyboard reference, error-message review, export PNG/SVG,
+README with a demo, and the Playwright smoke test.
 
 ## Known limitations / open questions
 - Op amp is ideal, no saturation (SPEC §4.2).

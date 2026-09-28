@@ -257,10 +257,11 @@ export function Editor() {
   useEffect(() => {
     const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA');
     const down = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      // Ctrl/⌘+Enter runs even while typing in a field (e.g. after changing the end time)
+      if (mod && e.key === 'Enter') { e.preventDefault(); runNow(); return; }
       if (isTyping(e.target)) return;
       const s = stateRef.current;
-      const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key === 'Enter') { e.preventDefault(); runNow(); return; }
       if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); dispatch({ type: e.shiftKey ? 'redo' : 'undo' }); return; }
       if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); dispatch({ type: 'redo' }); return; }
       if (mod) return;
