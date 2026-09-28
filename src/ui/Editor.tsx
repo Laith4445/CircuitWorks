@@ -3,8 +3,8 @@
  * editor state, keyboard shortcuts, running the solver, sharing and autosave.
  */
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { DiagnosticError, run, SolverError, formatSI } from '../engine';
-import { extract, parseAnalysis } from '../schematic/extract';
+import { DiagnosticError, run, SolverError, formatSI, defaultStep, type TranResult } from '../engine';
+import { extract, parseAnalysis, type Extraction } from '../schematic/extract';
 import type { Circuit, Point } from '../schematic/model';
 import { EXERCISES } from '../exercises';
 import { circuitFromHash, decodeCircuit, encodeCircuit, migrate, toFileJson, URL_WARN_BYTES } from '../share/url';
@@ -16,6 +16,8 @@ import { RunBar } from './RunBar';
 import { blankCircuit, initialState, reducer, type Tool } from './state';
 import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
+import { Plot } from './plot/Plot';
+import { tracesFromTran, valueAt, type Trace } from './traces';
 import { nextId } from './state';
 
 type Status = { kind: 'ok' | 'error' | 'info'; text: string } | null;
@@ -40,10 +42,20 @@ export function Editor() {
   const hasRun = useRef(false);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const [traces, setTraces] = useState<Trace[]>([]);
+  const [kept, setKept] = useState<Trace[]>([]);
+  const [plotOpen, setPlotOpen] = useState(true);
+  const [cursors, setCursors] = useState<{ a: number | null; b: number | null }>({ a: null, b: null });
+  const [cursorX, setCursorX] = useState<number | null>(null);
+  const [autoRerun, setAutoRerun] = useState(true);
+  /** last Time/Frequency run, so adding a probe can reuse it without re-solving */
+  const lastRun = useRef<{ sig: string; ex: Extraction; result: TranResult; ms: number } | null>(null);
+  const tranSignature = (c: Circuit) => JSON.stringify({ p: c.parts, w: c.wires.map((w) => [w.from, w.to]), a: c.analysis });
 
   const loadCircuit = useCallback((c: Circuit, message?: string) => {
     dispatch({ type: 'load', circuit: c });
     setReadouts({}); setPartInfo({}); setHighlight(new Set()); setNeedsGround(false);
+    setTraces([]); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null;
     hasRun.current = false;
     setStatus(message ? { kind: 'info', text: message } : null);
     setTimeout(() => setFitRequest((n) => n + 1), 0);
@@ -133,9 +145,17 @@ export function Editor() {
         }
         setPartInfo(info);
         setStatus({ kind: 'ok', text: `DC solved in ${ms.toFixed(1)} ms.${notes.length ? ' ' + notes.join(' ') : ''}` });
+      } else if (out.result.kind === 'tran') {
+        const r = out.result;
+        lastRun.current = { sig: tranSignature(circuit), ex, result: r, ms };
+        const tr = tracesFromTran(circuit, ex, r);
+        setTraces(tr);
+        setPlotOpen(true);
+        setPartInfo({});
+        setStatus({ kind: 'ok', text: `Time analysis solved: ${r.t.length.toLocaleString()} points, step ${formatSI(r.dt, 's')}, ${ms.toFixed(1)} ms.${notes.length ? ' ' + notes.join(' ') : ''}` });
       } else {
-        const n = out.result.kind === 'tran' ? out.result.t.length : out.result.f.length;
-        setStatus({ kind: 'info', text: `${out.result.kind === 'tran' ? 'Time' : 'Frequency'} analysis solved (${n} points, ${ms.toFixed(1)} ms). The plot panel arrives in the next milestone.${notes.length ? ' ' + notes.join(' ') : ''}` });
+        const n = out.result.f.length;
+        setStatus({ kind: 'info', text: `Frequency analysis solved (${n} points, ${ms.toFixed(1)} ms). The Bode plot arrives in the next milestone.${notes.length ? ' ' + notes.join(' ') : ''}` });
       }
     } catch (e) {
       if (e instanceof DiagnosticError) {
@@ -153,12 +173,39 @@ export function Editor() {
     }
   }, []);
 
-  // live re-run of DC after the first run (debounced)
+  // live re-run after the first run (debounced). DC always; Time only when the
+  // last run was quick (SPEC §6.1). Adding/moving a probe reuses the last Time result.
   useEffect(() => {
-    if (!hasRun.current || state.circuit.analysis.kind !== 'dc') return;
-    const t = setTimeout(() => runNow(true), 150);
-    return () => clearTimeout(t);
-  }, [state.rev, state.circuit.analysis.kind, runNow]);
+    if (!hasRun.current) return;
+    const kind = state.circuit.analysis.kind;
+    if (kind === 'dc') {
+      const t = setTimeout(() => runNow(true), 150);
+      return () => clearTimeout(t);
+    }
+    if (kind === 'tran' && lastRun.current) {
+      const lr = lastRun.current;
+      if (lr.sig === tranSignature(state.circuit)) {
+        setTraces(tracesFromTran(state.circuit, lr.ex, lr.result));
+        return;
+      }
+      if (autoRerun && lr.ms < 300) {
+        const t = setTimeout(() => runNow(true), 200);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [state.rev, state.circuit, runNow, autoRerun]);
+
+  // probe badges for Time runs: value at the cursor, or the final value
+  useEffect(() => {
+    if (!traces.length) return;
+    const ro: Record<string, ProbeReadout> = {};
+    for (const t of traces) {
+      const x = cursorX ?? t.x[t.x.length - 1];
+      const v = valueAt(t, x);
+      ro[t.id] = { text: formatSI(v, t.unit), tooltip: `${t.label} at t = ${formatSI(x, 's')}: ${formatSI(v, t.unit, 5)}${cursorX === null ? ' (end of run; hover the plot for other times)' : ''}` };
+    }
+    setReadouts(ro);
+  }, [traces, cursorX]);
 
   // ---- keyboard -----------------------------------------------------------------
   useEffect(() => {
@@ -231,6 +278,11 @@ export function Editor() {
   };
 
   const ex = useMemo(() => extract(state.circuit), [state.circuit]);
+  const derivedStep = useMemo(() => {
+    const a = state.circuit.analysis;
+    if (a.kind !== 'tran') return null;
+    try { const spec = parseAnalysis(a); return spec.kind === 'tran' ? defaultStep(ex.netlist, spec.tEnd) : null; } catch { return null; }
+  }, [state.circuit.analysis, ex]);
 
   return (
     <div className="editor">
@@ -252,7 +304,25 @@ export function Editor() {
         status={status}
         fixGround={needsGround ? addGround : null}
         examples={EXERCISES.map((e) => ({ id: e.exercise.id, title: e.exercise.title }))}
+        derivedStep={derivedStep}
+        autoRerun={autoRerun}
+        onAutoRerun={setAutoRerun}
       />
+      {traces.length > 0 && (
+        <section className={`plotpanel${plotOpen ? '' : ' collapsed'}`}>
+          <div className="plotbar">
+            <strong>Time plot</strong>
+            <button onClick={() => setKept((k) => [...k, ...traces.map((t) => ({ ...t, kept: true, label: `${t.label} (kept)` }))])} title="Keep these traces as ghosts so the next run draws on top">Keep</button>
+            <button onClick={() => setKept([])} disabled={!kept.length}>Clear kept{kept.length ? ` (${kept.length})` : ''}</button>
+            <span className="muted small">Hover for values · click to pin cursor A, again for B · double-click clears</span>
+            <span className="spacer" />
+            <button onClick={() => setPlotOpen((o) => !o)}>{plotOpen ? 'Hide' : 'Show'}</button>
+          </div>
+          {plotOpen && (
+            <Plot traces={[...kept, ...traces]} xLabel="t" xUnit="s" yLabel={[...new Set(traces.map((t) => t.unit))].join(' / ')} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
+          )}
+        </section>
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ th { background: #eee; }
 code { background: #eee; padding: 1px 4px; border-radius: 3px; }
 button { font: inherit; }
 
-.editor { height: 100%; display: grid; grid-template-columns: 180px 1fr 280px; grid-template-rows: 1fr auto; grid-template-areas: "palette canvas inspector" "runbar runbar runbar"; }
+.editor { height: 100%; display: grid; grid-template-columns: 180px 1fr 280px; grid-template-rows: 1fr auto auto; grid-template-areas: "palette canvas inspector" "runbar runbar runbar" "plot plot plot"; }
 .palette { grid-area: palette; border-right: 1px solid var(--line); overflow-y: auto; padding: 8px; background: #fff; }
 .palette h2, .inspector h2 { font-size: 13px; margin: 8px 0 6px; color: #444; }
 .palette-item { display: flex; align-items: center; gap: 6px; width: 100%; border: 1px solid transparent; background: none; padding: 2px 4px; border-radius: 6px; cursor: pointer; text-align: left; color: #222; }
@@ -81,3 +81,23 @@ button { font: inherit; }
 .status.ok { color: var(--ok); }
 .status.error { color: var(--danger); font-weight: 600; }
 .status.info { color: #374151; }
+
+.plotpanel { grid-area: plot; border-top: 1px solid var(--line); background: #fff; max-height: 46vh; overflow: auto; }
+.plotbar { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-bottom: 1px solid #eee; }
+.plotbar button { border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.plotbar button:disabled { opacity: .4; }
+.plotbar .spacer { flex: 1; }
+.plot { width: 100%; padding: 4px 8px; }
+.plot svg { display: block; cursor: crosshair; }
+.plot-bg { fill: #fafafa; stroke: #ddd; }
+.tick line { stroke: #e5e7eb; }
+.tick text { font-size: 10px; fill: #555; }
+.axis-label { font-size: 11px; fill: #444; }
+.trace { fill: none; stroke-width: 1.8; }
+.trace.kept { stroke-dasharray: 5 4; opacity: .45; }
+.cursor line { stroke: #444; stroke-dasharray: 3 3; }
+.cursor.pinned line { stroke: #111; stroke-dasharray: none; }
+.cursor text { font-size: 10px; font-weight: 700; fill: #111; }
+.legend text { font-size: 11px; font-weight: 600; }
+.cursor-table { margin: 4px 0 6px 64px; font-size: 12px; }
+.cursor-table td, .cursor-table th { border: 1px solid #ddd; padding: 2px 8px; }

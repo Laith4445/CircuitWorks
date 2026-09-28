@@ -1,6 +1,6 @@
 /** Run bar: the three analyses as tabs with their parameters inline, Run, Share, undo/redo, examples. */
 import type { AnalysisJson } from '../schematic/model';
-import { describeValue } from '../engine/units';
+import { describeValue, formatSI } from '../engine/units';
 import type { Action } from './state';
 
 export interface RunBarProps {
@@ -18,6 +18,9 @@ export interface RunBarProps {
   status: { kind: 'ok' | 'error' | 'info'; text: string } | null;
   fixGround: (() => void) | null;
   examples: { id: string; title: string }[];
+  derivedStep: number | null;
+  autoRerun: boolean;
+  onAutoRerun: (v: boolean) => void;
 }
 
 function Field({ label, value, unit, onChange }: { label: string; value: string; unit: string; onChange: (v: string) => void }) {
@@ -48,7 +51,18 @@ export function RunBar(p: RunBarProps) {
         <button className={a.kind === 'ac' ? 'active' : ''} onClick={() => tab('ac')}>Frequency</button>
       </div>
       {a.kind === 'dc' && <span className="muted">DC operating point</span>}
-      {a.kind === 'tran' && <Field label="End time" value={a.tEnd} unit="s" onChange={(v) => setA({ ...a, tEnd: v })} />}
+      {a.kind === 'tran' && (
+        <>
+          <Field label="End time" value={a.tEnd} unit="s" onChange={(v) => setA({ ...a, tEnd: v })} />
+          <label className="runfield" title="Advanced: the time step. Leave blank to let the app choose (shown as the placeholder).">
+            <span>Step</span>
+            <input value={a.dt ?? ''} placeholder={p.derivedStep ? `auto ${formatSI(p.derivedStep, 's')}` : 'auto'} size={9} onChange={(e) => setA({ ...a, dt: e.target.value || undefined })} />
+          </label>
+          <label className="runfield" title="Re-run automatically after each edit (only when the last run took under 300 ms)">
+            <input type="checkbox" checked={p.autoRerun} onChange={(e) => p.onAutoRerun(e.target.checked)} /> <span>auto</span>
+          </label>
+        </>
+      )}
       {a.kind === 'ac' && (
         <>
           <Field label="From" value={a.fStart} unit="Hz" onChange={(v) => setA({ ...a, fStart: v })} />
