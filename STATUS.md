@@ -1,6 +1,6 @@
 # STATUS.md — where CircuitWorks stands
 
-_Last updated: 2026-09-28 (session 2, milestones M1–M3)._
+_Last updated: 2026-09-28 (session 2, milestones M1–M4)._
 
 ## What works
 - **M0, the solver, is done and proven** (123 automated checks: every book value, plus
@@ -46,10 +46,17 @@ _Last updated: 2026-09-28 (session 2, milestones M1–M3)._
   Hover for readouts, click to pin cursors A and B (the table shows |H| and
   phase at each), roll the mouse wheel over the plot to zoom in on the
   frequency axis, double-click to reset.
+- **M4, switches and initial conditions, is built.** A switch shows whether it
+  starts open or closed; double-click it to flip, and the inspector has a tick
+  box for "flips at t = 0". A Time run now starts from the steady state with
+  the switch in its starting position, then flips it. Above the plot a small
+  table lists every probe **just before t = 0**, **just after**, and **at the
+  end of the run**, which is exactly what the book's "find v_C(0⁻), i_L(0⁺),
+  v_C(∞)" questions ask for.
 - The Self-Check page (`/#/selfcheck`) still shows 51 of 51 green.
 
 ## How to check it (plain language)
-1. In the project folder run `npm test` — expect **158 tests passed, 0 failed**.
+1. In the project folder run `npm test` — expect **163 tests passed, 0 failed**.
 2. Run `npm run dev` and open the address it prints (http://localhost:5173).
 3. **Build E1 from nothing:** press V, Space, click to place the source. Press R,
    Space, click, four times for the resistors. Press G, click, for the ground.
@@ -91,10 +98,19 @@ answer back.
    left and **1.051 MHz** on the right. Click to pin A at one and B at the
    other; the table's Δ column shows the bandwidth, about 100 kHz.
 
-## What's next (M4 — Switches and initial conditions)
-The solver already handles E6 (the tests prove it). M4 adds the on-screen
-side: a switch you can click, and named readouts for "just before", "just
-after" and "long after" the switch flips.
+## How to check M4
+1. Examples… → **E6**, press Run (Time, 2 ms). The table above the plot reads:
+   v_C −4.314 V before and just after, −654 mV at the end; i_L 39.21 mA before
+   and after, 5.949 mA at the end; i_C 0 then 33.69 mA; v_L 0 then −3.369 V;
+   V_N 386.5 mV → 3.756 V → 4.046 V. Every one matches EXERCISES.md.
+2. Double-click the switch S1: its label flips to "open, closes at t=0" and the
+   run repeats by itself with the opposite story (v_C now starts at −654 mV).
+   Double-click again to put it back.
+
+## What's next (M5 — Power)
+Power probes already read in DC. M5 adds the wattmeter reading of average
+power in a Time run, power as a plotted quantity in a Frequency sweep, and the
+E7 check that both methods agree.
 
 ## Known limitations / open questions
 - Op amp is ideal, no saturation (SPEC §4.2).

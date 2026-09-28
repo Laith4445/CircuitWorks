@@ -50,7 +50,7 @@ const PREFIXES: [number, string][] = [
 /** 3 significant figures with an SI prefix: 0.8695652 -> "870 mV". */
 export function formatSI(x: number, unit = '', sig = 3): string {
   if (!Number.isFinite(x)) return String(x);
-  if (x === 0) return `0 ${unit}`.trim();
+  if (x === 0 || Math.abs(x) < 1e-18) return `0 ${unit}`.trim();
   const ax = Math.abs(x);
   let mult = 1e-15, pre = 'f';
   for (const [m, p] of PREFIXES) {

@@ -157,7 +157,14 @@ export function initialReadouts(circuit: Circuit, ex: Extraction, r: TranResult)
   for (const t of traces) {
     const before = probeValueDc(circuit, ex, r.op0, t.id);
     if (!before) continue;
-    out.push({ id: t.id, label: t.label, color: t.color, unit: t.unit, before: before.value, after: t.y[0], end: t.y[t.y.length - 1] });
+    let scale = Math.abs(before.value);
+    for (let k = 0; k < t.y.length; k++) scale = Math.max(scale, Math.abs(t.y[k]));
+    out.push({ id: t.id, label: t.label, color: t.color, unit: t.unit, before: cleanTiny(before.value, scale), after: cleanTiny(t.y[0], scale), end: cleanTiny(t.y[t.y.length - 1], scale) });
   }
   return out;
+}
+
+/** Numbers that are only floating-point noise next to their companions read as 0 (SPEC §9.12). */
+export function cleanTiny(v: number, scale: number): number {
+  return Math.abs(v) < scale * 1e-9 ? 0 : v;
 }

@@ -18,7 +18,7 @@ import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
 import { Bode } from './plot/Bode';
-import { tracesFromTran, tracesFromAc, initialReadouts, valueAt, type Trace, type InitialReadout } from './traces';
+import { tracesFromTran, tracesFromAc, initialReadouts, valueAt, cleanTiny, type Trace, type InitialReadout } from './traces';
 import { nextProbeId } from './state';
 import { nextId } from './state';
 
@@ -235,7 +235,9 @@ export function Editor() {
     const ro: Record<string, ProbeReadout> = {};
     for (const t of traces) {
       const x = cursorX ?? t.x[t.x.length - 1];
-      const v = valueAt(t, x);
+      let scale = 0;
+      for (let k = 0; k < t.y.length; k++) scale = Math.max(scale, Math.abs(t.y[k]));
+      const v = cleanTiny(valueAt(t, x), scale);
       ro[t.id] = { text: formatSI(v, t.unit), tooltip: `${t.label} at t = ${formatSI(x, 's')}: ${formatSI(v, t.unit, 5)}${cursorX === null ? ' (end of run; hover the plot for other times)' : ''}` };
     }
     setReadouts(ro);
