@@ -67,3 +67,22 @@ export function nearestIndex(xs: Float64Array, x: number): number {
   while (hi - lo > 1) { const m = (lo + hi) >> 1; if (xs[m] <= x) lo = m; else hi = m; }
   return x - xs[lo] < xs[hi] - x ? lo : hi;
 }
+
+/** Ticks for a zoomed log axis: decades if several fit, otherwise 1-2-5 sub-steps, otherwise plain linear ticks. */
+export function logRangeTicks(min: number, max: number): { ticks: number[]; lo: number; hi: number } {
+  const decades = Math.log10(max / min);
+  if (decades >= 1.5) {
+    const t = logTicks(min, max);
+    return { ticks: t.ticks.filter((v) => v >= min && v <= max), lo: min, hi: max };
+  }
+  if (decades >= 0.4) {
+    const ticks: number[] = [];
+    const startDec = Math.floor(Math.log10(min));
+    for (let d = startDec; d <= Math.ceil(Math.log10(max)); d++) {
+      for (const m of [1, 2, 5]) { const v = m * Math.pow(10, d); if (v >= min && v <= max) ticks.push(v); }
+    }
+    return { ticks, lo: min, hi: max };
+  }
+  const t = linearTicks(min, max, 6);
+  return { ticks: t.ticks.filter((v) => v >= min && v <= max), lo: min, hi: max };
+}

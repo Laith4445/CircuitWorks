@@ -352,7 +352,7 @@ export function Editor() {
             <button onClick={() => setKept([])} disabled={!kept.length}>Clear kept{kept.length ? ` (${kept.length})` : ''}</button>
             {ac.mag.length > 0 && <button onClick={() => setDb((d) => !d)} title="Show magnitude in decibels or as a plain ratio">{db ? 'dB' : 'linear'}</button>}
             <button onClick={makeRatio} disabled={selectedVoltageProbes.length !== 2} title="Select two voltage probes (shift-click) and press Ratio to plot the first divided by the second (a transfer function)">Ratio</button>
-            <span className="muted small">Hover for values · click to pin cursor A, again for B · double-click clears</span>
+            <span className="muted small">Hover for values · click pins cursor A, again B · wheel zooms · double-click resets</span>
             <span className="spacer" />
             <button onClick={() => setPlotOpen((o) => !o)}>{plotOpen ? 'Hide' : 'Show'}</button>
           </div>

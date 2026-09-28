@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { linearTicks, logTicks, decimate, nearestIndex } from './scale';
+import { linearTicks, logTicks, logRangeTicks, decimate, nearestIndex } from './scale';
 import { unwrap, valueAt } from '../traces';
 
 describe('axis ticks', () => {
@@ -17,6 +17,12 @@ describe('axis ticks', () => {
   });
   it('log ticks are decades', () => {
     expect(logTicks(1e5, 1e7).ticks).toEqual([1e5, 1e6, 1e7]);
+  });
+  it('a zoomed log axis gets 1-2-5 ticks, and a tight zoom gets linear ticks', () => {
+    expect(logRangeTicks(2e5, 3e6).ticks).toEqual([2e5, 5e5, 1e6, 2e6]);
+    const tight = logRangeTicks(9e5, 1.1e6);
+    expect(tight.ticks.length).toBeGreaterThan(2);
+    expect(tight.ticks.every((v) => v >= 9e5 && v <= 1.1e6)).toBe(true);
   });
 });
 

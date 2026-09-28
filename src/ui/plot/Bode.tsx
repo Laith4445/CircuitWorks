@@ -23,6 +23,7 @@ function fmtMag(v: number, unit: string, db: boolean): string {
 
 export function Bode({ mag, phase, onCursor, cursors, onCursors, db }: BodeProps) {
   const [hover, setHover] = useState<number | null>(null);
+  const [xRange, setXRange] = useState<[number, number] | null>(null);
   const magShown = db ? mag.map(toDb) : mag;
   const live = mag.filter((t) => !t.kept);
   const row = (t: Trace, x: number | null) => {
@@ -34,9 +35,9 @@ export function Bode({ mag, phase, onCursor, cursors, onCursors, db }: BodeProps
   return (
     <div className="bode">
       <Plot traces={magShown} xLabel="f" xUnit="Hz" yLabel={db ? 'magnitude (dB)' : 'magnitude'} xLog height={200}
-        cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} onCursor={onCursor} showTable={false} yUnit={db ? 'dB' : undefined} />
+        cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} onCursor={onCursor} showTable={false} yUnit={db ? 'dB' : undefined} xRange={xRange} onXRange={setXRange} />
       <Plot traces={phase} xLabel="f" xUnit="Hz" yLabel="phase (°)" xLog height={160}
-        cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="°" />
+        cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="°" xRange={xRange} onXRange={setXRange} />
       {(cursors.a !== null || cursors.b !== null) && (
         <table className="cursor-table">
           <thead><tr><th></th>

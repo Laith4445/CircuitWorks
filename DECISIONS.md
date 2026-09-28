@@ -30,3 +30,7 @@ Format: date · decision · why. Newest at the bottom.
 - 2026-09-28 · Time re-runs automatically after an edit only when the last run took under 300 ms and the "auto" box in the run bar is ticked (SPEC §6.1). Otherwise press Run.
 - 2026-09-28 · The time step field lives in the run bar as "Step", blank by default with the derived value as placeholder, instead of an "Advanced" disclosure. One field, no extra click.
 - 2026-09-28 · No backward-Euler fallback was needed: E6's switch transient shows no trapezoidal ringing thanks to the exact t = 0⁺ solve.
+- 2026-09-28 · M3 ratio probe: select two voltage probes (shift-click) and press Ratio in the plot bar; the first selected is the numerator. The ratio probe is drawn as a badge next to its numerator probe and saved in the file as `{"kind":"ratio","num":"P2","den":"P1"}`.
+- 2026-09-28 · Bode magnitude defaults to dB with a "dB / linear" toggle in the plot bar; phase is unwrapped along the sweep and anchored so the lowest-frequency point lies in (−180°, 180°].
+- 2026-09-28 · Plots zoom on the x axis with the mouse wheel (both Bode panels together) and reset on double-click, because a two-decade sweep at screen resolution is too coarse to land a cursor on −3.01 dB. Zooming also rescales y to what is visible.
+- 2026-09-28 · During a Frequency run the probe badges show the magnitude at the plot cursor (dB for ratio probes), or at the top of the sweep when there is no cursor.

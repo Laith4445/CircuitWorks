@@ -1,6 +1,6 @@
 # STATUS.md — where CircuitWorks stands
 
-_Last updated: 2026-09-28 (session 2, milestones M1 and M2)._
+_Last updated: 2026-09-28 (session 2, milestones M1–M3)._
 
 ## What works
 - **M0, the solver, is done and proven** (123 automated checks: every book value, plus
@@ -38,10 +38,18 @@ _Last updated: 2026-09-28 (session 2, milestones M1 and M2)._
   top (that is the E4 damping comparison). The time step is chosen
   automatically and shown greyed in the Step box; type your own to override.
   Adding a probe after a run shows its trace at once without re-solving.
+- **M3, Frequency sweep on screen, is built.** Pick the **Frequency** tab, set
+  the start and stop frequency, press Run. Two stacked panels appear: magnitude
+  (dB, with a button to switch to a plain ratio) and phase (degrees, no 360°
+  jumps), on a logarithmic frequency axis. Shift-click two voltage probes and
+  press **Ratio** to plot one divided by the other (the transfer function H).
+  Hover for readouts, click to pin cursors A and B (the table shows |H| and
+  phase at each), roll the mouse wheel over the plot to zoom in on the
+  frequency axis, double-click to reset.
 - The Self-Check page (`/#/selfcheck`) still shows 51 of 51 green.
 
 ## How to check it (plain language)
-1. In the project folder run `npm test` — expect **153 tests passed, 0 failed**.
+1. In the project folder run `npm test` — expect **158 tests passed, 0 failed**.
 2. Run `npm run dev` and open the address it prints (http://localhost:5173).
 3. **Build E1 from nothing:** press V, Space, click to place the source. Press R,
    Space, click, four times for the resistors. Press G, click, for the ground.
@@ -73,13 +81,22 @@ answer back.
 4. Examples… → **E3**, Run. Two traces: v_in steps 0→1 V, v_out steps 0→2 V at
    the same instants. Hover anywhere the pulse is high: v_out = 2 V exactly.
 
-## What's next (M3 — Frequency)
-The AC sweep already solves; M3 adds the two-panel Bode plot (magnitude in dB,
-phase in degrees on a log axis), the transfer-function "ratio" probe, and
-cursors that find the half-power frequencies for E5.
+## How to check M3
+1. Examples… → **E5**, press Run. The magnitude panel shows a peak at 1 MHz
+   reaching 0 dB; the phase panel swings from +89° down to −89° through 0° at
+   1 MHz. The badge on the H probe reads −39.9 dB (the value at 10 MHz).
+2. Hover the peak: H reads 0.00 dB, phase 0.0°, f = 1 MHz.
+3. Roll the mouse wheel over the plot near 1 MHz a few times to zoom in, then
+   hover until H reads **−3.01 dB**: this happens at about **951 kHz** on the
+   left and **1.051 MHz** on the right. Click to pin A at one and B at the
+   other; the table's Δ column shows the bandwidth, about 100 kHz.
+
+## What's next (M4 — Switches and initial conditions)
+The solver already handles E6 (the tests prove it). M4 adds the on-screen
+side: a switch you can click, and named readouts for "just before", "just
+after" and "long after" the switch flips.
 
 ## Known limitations / open questions
-- Frequency runs solve but show no plot yet (M3). The run bar says so.
 - Op amp is ideal, no saturation (SPEC §4.2).
 - Node names in probe tooltips are automatic (n1, n2…); editable labels come later.
 - The Playwright browser test for E1 is deferred (see DECISIONS.md); the same

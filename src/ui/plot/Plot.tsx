@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatSI } from '../../engine/units';
 import type { Trace } from '../traces';
 import { valueAt } from '../traces';
-import { decimate, linearTicks, logTicks } from './scale';
+import { decimate, linearTicks, logTicks, logRangeTicks } from './scale';
 
 export interface PlotProps {
   traces: Trace[];
@@ -28,6 +28,9 @@ export interface PlotProps {
   showTable?: boolean;
   /** shown at the right of the y ticks instead of the first trace's unit */
   yUnit?: string;
+  /** zoomed x range (wheel to zoom, double-click to reset); lifted so panels can share it */
+  xRange?: [number, number] | null;
+  onXRange?: (r: [number, number] | null) => void;
 }
 
 const M = { l: 64, r: 16, t: 12, b: 30 };
@@ -39,7 +42,10 @@ function fmt(v: number, unit: string): string {
   return formatSI(v, unit, 4);
 }
 
-export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, onCursor, cursors, onCursors, hover: hoverProp, onHover, showTable = true, yUnit }: PlotProps) {
+export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, onCursor, cursors, onCursors, hover: hoverProp, onHover, showTable = true, yUnit, xRange: xRangeProp, onXRange }: PlotProps) {
+  const [xRangeLocal, setXRangeLocal] = useState<[number, number] | null>(null);
+  const xRange = xRangeProp !== undefined ? xRangeProp : xRangeLocal;
+  const setXRange = (r: [number, number] | null) => { setXRangeLocal(r); onXRange?.(r); };
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
   const [hoverLocal, setHoverLocal] = useState<number | null>(null);
@@ -62,7 +68,11 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
     for (const t of traces) {
       if (!t.x.length) continue;
       xmin = Math.min(xmin, t.x[0]); xmax = Math.max(xmax, t.x[t.x.length - 1]);
+    }
+    if (xRange) { xmin = xRange[0]; xmax = xRange[1]; }
+    for (const t of traces) {
       for (let k = 0; k < t.y.length; k++) {
+        if (t.x[k] < xmin || t.x[k] > xmax) continue;
         const v = t.y[k];
         if (!Number.isFinite(v)) continue;
         if (yLog && v <= 0) continue;
@@ -72,9 +82,9 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
     }
     if (!Number.isFinite(xmin)) { xmin = 0; xmax = 1; }
     if (!Number.isFinite(ymin)) { ymin = 0; ymax = 1; }
-    const xt = xLog ? logTicks(xmin, xmax) : linearTicks(xmin, xmax, 6);
+    const xt = xLog ? (xRange ? logRangeTicks(xmin, xmax) : logTicks(xmin, xmax)) : linearTicks(xmin, xmax, 6);
     const yt = yLog ? logTicks(ymin, ymax) : linearTicks(ymin, ymax, 5);
-    const xlo = xLog ? xt.lo : xmin, xhi = xLog ? xt.hi : xmax;
+    const xlo = xLog && !xRange ? xt.lo : xmin, xhi = xLog && !xRange ? xt.hi : xmax;
     const sx = (x: number) => M.l + (xLog ? (Math.log10(x) - Math.log10(xlo)) / (Math.log10(xhi) - Math.log10(xlo) || 1) : (x - xlo) / (xhi - xlo || 1)) * pw;
     const sy = (y: number) => M.t + ph - (yLog ? (Math.log10(y) - Math.log10(yt.lo)) / (Math.log10(yt.hi) - Math.log10(yt.lo) || 1) : (y - yt.lo) / (yt.hi - yt.lo || 1)) * ph;
     const ix = (px: number) => {
@@ -82,7 +92,7 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
       return xLog ? Math.pow(10, Math.log10(xlo) + f * (Math.log10(xhi) - Math.log10(xlo))) : xlo + f * (xhi - xlo);
     };
     return { xt, yt, sx, sy, ix, xlo, xhi };
-  }, [traces, xLog, yLog, pw, ph]);
+  }, [traces, xLog, yLog, pw, ph, xRange]);
 
   const paths = useMemo(() => traces.map((t) => {
     const px = new Float64Array(t.x.length), py = new Float64Array(t.x.length);
@@ -146,7 +156,27 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
           else if (cursors.b === null) onCursors({ a: cursors.a, b: x });
           else onCursors({ a: x, b: null });
         }}
-        onDoubleClick={() => onCursors({ a: null, b: null })}
+        onDoubleClick={() => { onCursors({ a: null, b: null }); setXRange(null); }}
+        onWheel={(e) => {
+          const x = xAt(e);
+          const f = Math.exp(e.deltaY * 0.002);
+          const lo = scales.xlo, hi = scales.xhi;
+          let nlo: number, nhi: number;
+          if (xLog) {
+            const L = Math.log10;
+            nlo = Math.pow(10, L(x) - (L(x) - L(lo)) * f);
+            nhi = Math.pow(10, L(x) + (L(hi) - L(x)) * f);
+          } else {
+            nlo = x - (x - lo) * f;
+            nhi = x + (hi - x) * f;
+          }
+          // never zoom out past the data
+          let dmin = Infinity, dmax = -Infinity;
+          for (const t of traces) if (t.x.length) { dmin = Math.min(dmin, t.x[0]); dmax = Math.max(dmax, t.x[t.x.length - 1]); }
+          nlo = Math.max(nlo, dmin); nhi = Math.min(nhi, dmax);
+          if (nhi <= nlo) return;
+          setXRange(nlo >= dmin && nhi <= dmax && (nlo > dmin || nhi < dmax) ? [nlo, nhi] : null);
+        }}
       >
         <rect x={M.l} y={M.t} width={pw} height={ph} className="plot-bg" />
         {scales.xt.ticks.map((v) => (
