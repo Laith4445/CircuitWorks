@@ -13,12 +13,15 @@ export interface Trace {
   y: Float64Array;
   /** a "kept" ghost from a previous run: drawn dashed and lighter */
   kept?: boolean;
+  /** which panel of a multi-panel plot this belongs to */
+  panel?: 'mag' | 'phase';
 }
 
 export function probeLabel(circuit: Circuit, id: string): string {
   const pr = circuit.probes.find((p) => p.id === id)!;
   const letter = probeLetter(circuit, id);
   if (pr.label) return pr.label;
+  if (pr.kind === 'ratio') return `${probeLabel(circuit, pr.num ?? '')}/${probeLabel(circuit, pr.den ?? '')}`;
   return pr.kind === 'v' ? `V${letter}` : pr.kind === 'i' ? `I${letter}` : `P${letter}`;
 }
 
@@ -50,17 +53,10 @@ export function tracesFromTran(circuit: Circuit, ex: Extraction, r: TranResult):
   return out;
 }
 
-/** Complex traces for the frequency sweep (used by M3). */
+/** Complex traces for the frequency sweep: magnitude (linear) and unwrapped phase per probe. */
 export function tracesFromAc(circuit: Circuit, ex: Extraction, r: AcResult): { mag: Trace[]; phase: Trace[] } {
   const mag: Trace[] = [], phase: Trace[] = [];
-  const push = (id: string, unit: string, re: Float64Array, im: Float64Array) => {
-    const m = new Float64Array(r.f.length), p = new Float64Array(r.f.length);
-    for (let k = 0; k < m.length; k++) { m[k] = Math.hypot(re[k], im[k]); p[k] = (Math.atan2(im[k], re[k]) * 180) / Math.PI; }
-    unwrap(p);
-    const base = { id, label: probeLabel(circuit, id), color: probeColor(circuit, id), x: r.f };
-    mag.push({ ...base, unit, y: m });
-    phase.push({ ...base, unit: '°', y: p });
-  };
+  const complex = new Map<string, { re: Float64Array; im: Float64Array; unit: string }>();
   for (const pr of circuit.probes) {
     if (pr.kind === 'v' && pr.nodeAt) {
       const n = ex.nodeAtPoint(pr.nodeAt);
@@ -68,15 +64,44 @@ export function tracesFromAc(circuit: Circuit, ex: Extraction, r: AcResult): { m
       if (n === undefined || ref === undefined || !r.v[n] || !r.v[ref]) continue;
       const re = new Float64Array(r.f.length), im = new Float64Array(r.f.length);
       for (let k = 0; k < re.length; k++) { re[k] = r.v[n].re[k] - r.v[ref].re[k]; im[k] = r.v[n].im[k] - r.v[ref].im[k]; }
-      push(pr.id, 'V', re, im);
+      complex.set(pr.id, { re, im, unit: 'V' });
     } else if (pr.kind === 'i' && pr.element && r.i[pr.element]) {
       const d = pr.dir ?? 1;
       const re = new Float64Array(r.f.length), im = new Float64Array(r.f.length);
       for (let k = 0; k < re.length; k++) { re[k] = r.i[pr.element].re[k] * d; im[k] = r.i[pr.element].im[k] * d; }
-      push(pr.id, 'A', re, im);
+      complex.set(pr.id, { re, im, unit: 'A' });
     }
   }
+  for (const pr of circuit.probes) {
+    if (pr.kind !== 'ratio' || !pr.num || !pr.den) continue;
+    const a = complex.get(pr.num), b = complex.get(pr.den);
+    if (!a || !b) continue;
+    const re = new Float64Array(r.f.length), im = new Float64Array(r.f.length);
+    for (let k = 0; k < re.length; k++) {
+      const d = b.re[k] * b.re[k] + b.im[k] * b.im[k] || 1e-300;
+      re[k] = (a.re[k] * b.re[k] + a.im[k] * b.im[k]) / d;
+      im[k] = (a.im[k] * b.re[k] - a.re[k] * b.im[k]) / d;
+    }
+    complex.set(pr.id, { re, im, unit: a.unit === b.unit ? '' : `${a.unit}/${b.unit}` });
+  }
+  for (const pr of circuit.probes) {
+    const c = complex.get(pr.id);
+    if (!c) continue;
+    const m = new Float64Array(r.f.length), p = new Float64Array(r.f.length);
+    for (let k = 0; k < m.length; k++) { m[k] = Math.hypot(c.re[k], c.im[k]); p[k] = (Math.atan2(c.im[k], c.re[k]) * 180) / Math.PI; }
+    unwrap(p);
+    const base = { id: pr.id, label: probeLabel(circuit, pr.id), color: probeColor(circuit, pr.id), x: r.f };
+    mag.push({ ...base, unit: c.unit, y: m, panel: 'mag' });
+    phase.push({ ...base, unit: '°', y: p, panel: 'phase' });
+  }
   return { mag, phase };
+}
+
+/** Magnitude trace in dB (20·log10). Zero magnitudes become -300 dB so the axis stays finite. */
+export function toDb(t: Trace): Trace {
+  const y = new Float64Array(t.y.length);
+  for (let k = 0; k < y.length; k++) y[k] = t.y[k] > 0 ? 20 * Math.log10(t.y[k]) : -300;
+  return { ...t, y, unit: 'dB' };
 }
 
 /** Unwrap phase in degrees along the sweep; anchor the first point to (-180, 180]. */

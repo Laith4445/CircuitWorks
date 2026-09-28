@@ -165,6 +165,11 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
       return;
     }
     if (hit.kind === 'probe') {
+      if (e.shiftKey) {
+        const already = selection.probes.includes(hit.id);
+        dispatch({ type: 'select', selection: { ...selection, probes: already ? selection.probes.filter((x) => x !== hit.id) : [...selection.probes, hit.id] } });
+        return;
+      }
       dispatch({ type: 'select', selection: { parts: [], wires: [], probes: [hit.id] } });
       setDrag({ kind: 'probeHandle', id: hit.id, handle: hit.handle, current: sp });
       return;
@@ -436,6 +441,17 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
               </g>
               <text x={ox} y={oy - 8} textAnchor="middle" className="probe-letter" fill={color}>{letter}</text>
               <Badge x={ox + 10} y={oy - 26} color={color} text={readout ? readout.text : (pr.label ?? (pr.kind === 'i' ? `I${letter}` : `P${letter}`))} tooltip={readout?.tooltip ?? (pr.kind === 'i' ? 'Current in the arrow direction' : 'Power absorbed by the part')} />
+            </g>
+          );
+        }
+        if (pr.kind === 'ratio') {
+          const num = circuit.probes.find((x) => x.id === pr.num);
+          if (!num?.nodeAt) return null;
+          const at: Point = [num.nodeAt[0] + 8, num.nodeAt[1] + 14];
+          return (
+            <g key={pr.id} className={`probe${sel ? ' selected' : ''}`} style={{ color }}
+               onPointerDown={(e) => { e.stopPropagation(); dispatch({ type: 'select', selection: { parts: [], wires: [], probes: e.shiftKey ? [...selection.probes, pr.id] : [pr.id] } }); }}>
+              <Badge x={at[0]} y={at[1]} color={color} text={readout ? `${pr.label ?? letter} = ${readout.text}` : `${pr.label ?? letter}: ratio`} tooltip={readout?.tooltip ?? 'Transfer function: one voltage probe divided by another. Plotted in Frequency runs.'} />
             </g>
           );
         }

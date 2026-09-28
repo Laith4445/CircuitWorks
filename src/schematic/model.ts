@@ -23,10 +23,14 @@ export interface Wire { from: Point; to: Point; id?: string }
 
 export interface Probe {
   id: string;
-  kind: 'v' | 'i' | 'p';
+  /** v = voltage at a point (or between two), i = current through a part, p = power in a part, ratio = one voltage probe divided by another (a transfer function) */
+  kind: 'v' | 'i' | 'p' | 'ratio';
   nodeAt?: Point;
   refAt?: Point;
   element?: string;
+  /** ratio probes: numerator and denominator probe ids */
+  num?: string;
+  den?: string;
   /** Current probes: +1 = pin a -> pin b (the element's own direction), -1 = flipped. */
   dir?: 1 | -1;
   label?: string;

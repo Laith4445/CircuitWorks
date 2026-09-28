@@ -3,7 +3,7 @@
  * editor state, keyboard shortcuts, running the solver, sharing and autosave.
  */
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { DiagnosticError, run, SolverError, formatSI, defaultStep, type TranResult } from '../engine';
+import { DiagnosticError, run, SolverError, formatSI, defaultStep, type TranResult, type AcResult } from '../engine';
 import { extract, parseAnalysis, type Extraction } from '../schematic/extract';
 import type { Circuit, Point } from '../schematic/model';
 import { EXERCISES } from '../exercises';
@@ -17,7 +17,9 @@ import { blankCircuit, initialState, reducer, type Tool } from './state';
 import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
-import { tracesFromTran, valueAt, type Trace } from './traces';
+import { Bode } from './plot/Bode';
+import { tracesFromTran, tracesFromAc, valueAt, type Trace } from './traces';
+import { nextProbeId } from './state';
 import { nextId } from './state';
 
 type Status = { kind: 'ok' | 'error' | 'info'; text: string } | null;
@@ -43,7 +45,10 @@ export function Editor() {
   const stateRef = useRef(state);
   stateRef.current = state;
   const [traces, setTraces] = useState<Trace[]>([]);
+  /** frequency-sweep traces (magnitude + phase); empty when the last run was a Time run */
+  const [ac, setAc] = useState<{ mag: Trace[]; phase: Trace[] }>({ mag: [], phase: [] });
   const [kept, setKept] = useState<Trace[]>([]);
+  const [db, setDb] = useState(true);
   const [plotOpen, setPlotOpen] = useState(true);
   const [cursors, setCursors] = useState<{ a: number | null; b: number | null }>({ a: null, b: null });
   const [cursorX, setCursorX] = useState<number | null>(null);
@@ -51,13 +56,13 @@ export function Editor() {
   /** re-fit the drawing once the plot panel first takes space away from it */
   const firstPlot = useRef(true);
   /** last Time/Frequency run, so adding a probe can reuse it without re-solving */
-  const lastRun = useRef<{ sig: string; ex: Extraction; result: TranResult; ms: number } | null>(null);
+  const lastRun = useRef<{ sig: string; ex: Extraction; result: TranResult | AcResult; ms: number } | null>(null);
   const tranSignature = (c: Circuit) => JSON.stringify({ p: c.parts, w: c.wires.map((w) => [w.from, w.to]), a: c.analysis });
 
   const loadCircuit = useCallback((c: Circuit, message?: string) => {
     dispatch({ type: 'load', circuit: c });
     setReadouts({}); setPartInfo({}); setHighlight(new Set()); setNeedsGround(false);
-    setTraces([]); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
+    setTraces([]); setAc({ mag: [], phase: [] }); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
     hasRun.current = false;
     setStatus(message ? { kind: 'info', text: message } : null);
     setTimeout(() => setFitRequest((n) => n + 1), 0);
@@ -152,13 +157,20 @@ export function Editor() {
         lastRun.current = { sig: tranSignature(circuit), ex, result: r, ms };
         const tr = tracesFromTran(circuit, ex, r);
         setTraces(tr);
+        setAc({ mag: [], phase: [] });
         setPlotOpen(true);
         setPartInfo({});
         if (firstPlot.current) { firstPlot.current = false; setTimeout(() => setFitRequest((n) => n + 1), 50); }
         setStatus({ kind: 'ok', text: `Time analysis solved: ${r.t.length.toLocaleString()} points, step ${formatSI(r.dt, 's')}, ${ms.toFixed(1)} ms.${notes.length ? ' ' + notes.join(' ') : ''}` });
       } else {
-        const n = out.result.f.length;
-        setStatus({ kind: 'info', text: `Frequency analysis solved (${n} points, ${ms.toFixed(1)} ms). The Bode plot arrives in the next milestone.${notes.length ? ' ' + notes.join(' ') : ''}` });
+        const r = out.result;
+        lastRun.current = { sig: tranSignature(circuit), ex, result: r, ms };
+        setAc(tracesFromAc(circuit, ex, r));
+        setTraces([]);
+        setPlotOpen(true);
+        setPartInfo({});
+        if (firstPlot.current) { firstPlot.current = false; setTimeout(() => setFitRequest((n) => n + 1), 50); }
+        setStatus({ kind: 'ok', text: `Frequency sweep solved: ${r.f.length} points, ${ms.toFixed(1)} ms.${notes.length ? ' ' + notes.join(' ') : ''}` });
       }
     } catch (e) {
       if (e instanceof DiagnosticError) {
@@ -185,10 +197,11 @@ export function Editor() {
       const t = setTimeout(() => runNow(true), 150);
       return () => clearTimeout(t);
     }
-    if (kind === 'tran' && lastRun.current) {
+    if ((kind === 'tran' || kind === 'ac') && lastRun.current && lastRun.current.result.kind === kind) {
       const lr = lastRun.current;
       if (lr.sig === tranSignature(state.circuit)) {
-        setTraces(tracesFromTran(state.circuit, lr.ex, lr.result));
+        if (lr.result.kind === 'tran') setTraces(tracesFromTran(state.circuit, lr.ex, lr.result));
+        else setAc(tracesFromAc(state.circuit, lr.ex, lr.result));
         return;
       }
       if (autoRerun && lr.ms < 300) {
@@ -197,6 +210,20 @@ export function Editor() {
       }
     }
   }, [state.rev, state.circuit, runNow, autoRerun]);
+
+  // probe badges for Frequency runs: magnitude at the cursor (or at the highest frequency)
+  useEffect(() => {
+    if (!ac.mag.length) return;
+    const ro: Record<string, ProbeReadout> = {};
+    for (const t of ac.mag) {
+      const x = cursorX ?? t.x[t.x.length - 1];
+      const m = valueAt(t, x);
+      const ph = valueAt(ac.phase.find((q) => q.id === t.id)!, x);
+      const text = t.unit === '' ? (db ? `${(20 * Math.log10(Math.max(m, 1e-300))).toFixed(1)} dB` : m.toPrecision(3)) : formatSI(m, t.unit);
+      ro[t.id] = { text, tooltip: `${t.label} at ${formatSI(x, 'Hz', 4)}: |${t.label}| = ${t.unit === '' ? m.toPrecision(5) : formatSI(m, t.unit, 5)} (${(20 * Math.log10(Math.max(m, 1e-300))).toFixed(2)} dB), phase ${ph.toFixed(2)}°${cursorX === null ? ' (top of sweep; hover the plot for other frequencies)' : ''}` };
+    }
+    setReadouts(ro);
+  }, [ac, cursorX, db]);
 
   // probe badges for Time runs: value at the cursor, or the final value
   useEffect(() => {
@@ -272,6 +299,12 @@ export function Editor() {
     try { loadCircuit(migrate(JSON.parse(await f.text())), `Opened ${f.name}.`); }
     catch (e) { setStatus({ kind: 'error', text: `Couldn't open ${f.name}: ${(e as Error).message}` }); }
   };
+  const selectedVoltageProbes = state.selection.probes.filter((id) => state.circuit.probes.find((p) => p.id === id)?.kind === 'v');
+  const makeRatio = () => {
+    if (selectedVoltageProbes.length !== 2) return;
+    const [num, den] = selectedVoltageProbes;
+    dispatch({ type: 'addProbe', probe: { id: nextProbeId(state.circuit), kind: 'ratio', num, den } });
+  };
   const addGround = () => {
     const p: Point | null = lowestPoint(state.circuit);
     if (!p) return;
@@ -311,18 +344,23 @@ export function Editor() {
         autoRerun={autoRerun}
         onAutoRerun={setAutoRerun}
       />
-      {traces.length > 0 && (
+      {(traces.length > 0 || ac.mag.length > 0) && (
         <section className={`plotpanel${plotOpen ? '' : ' collapsed'}`}>
           <div className="plotbar">
-            <strong>Time plot</strong>
-            <button onClick={() => setKept((k) => [...k, ...traces.map((t) => ({ ...t, kept: true, label: `${t.label} (kept)` }))])} title="Keep these traces as ghosts so the next run draws on top">Keep</button>
+            <strong>{ac.mag.length ? 'Frequency plot' : 'Time plot'}</strong>
+            <button onClick={() => setKept((k) => [...k, ...[...traces, ...ac.mag, ...ac.phase].map((t) => ({ ...t, kept: true, label: `${t.label} (kept)` }))])} title="Keep these traces as ghosts so the next run draws on top">Keep</button>
             <button onClick={() => setKept([])} disabled={!kept.length}>Clear kept{kept.length ? ` (${kept.length})` : ''}</button>
+            {ac.mag.length > 0 && <button onClick={() => setDb((d) => !d)} title="Show magnitude in decibels or as a plain ratio">{db ? 'dB' : 'linear'}</button>}
+            <button onClick={makeRatio} disabled={selectedVoltageProbes.length !== 2} title="Select two voltage probes (shift-click) and press Ratio to plot the first divided by the second (a transfer function)">Ratio</button>
             <span className="muted small">Hover for values · click to pin cursor A, again for B · double-click clears</span>
             <span className="spacer" />
             <button onClick={() => setPlotOpen((o) => !o)}>{plotOpen ? 'Hide' : 'Show'}</button>
           </div>
-          {plotOpen && (
-            <Plot traces={[...kept, ...traces]} xLabel="t" xUnit="s" yLabel={[...new Set(traces.map((t) => t.unit))].join(' / ')} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
+          {plotOpen && ac.mag.length > 0 && (
+            <Bode mag={[...kept.filter((t) => t.panel === 'mag'), ...ac.mag]} phase={[...kept.filter((t) => t.panel === 'phase'), ...ac.phase]} db={db} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
+          )}
+          {plotOpen && ac.mag.length === 0 && (
+            <Plot traces={[...kept.filter((t) => !t.panel), ...traces]} xLabel="t" xUnit="s" yLabel={[...new Set(traces.map((t) => t.unit))].join(' / ')} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
           )}
         </section>
       )}

@@ -20,7 +20,8 @@
   ],
   "probes": [
     {"id":"P1","kind":"v","nodeAt":[70,60],"label":"v_in"},
-    {"id":"P2","kind":"v","nodeAt":[240,60],"label":"v_out"}
+    {"id":"P2","kind":"v","nodeAt":[240,60],"label":"v_out"},
+    {"id":"P3","kind":"ratio","num":"P2","den":"P1","label":"H"}
   ],
   "analysis": {"kind":"ac","fStart":"100k","fStop":"10MEG","pointsPerDecade":100,"log":true},
   "labels": [

@@ -59,6 +59,7 @@ export function Inspector({ circuit, selection, dispatch, nodeAt }: { circuit: C
           <p><b>Red pins</b> aren't connected yet. The circuit can't run until they are.</p>
           <p><b>Probe:</b> press <b>P</b> and drop it on a wire. Drag its ○ to another point to measure between two points.</p>
           <p><b>Run:</b> the Run button or <b>Ctrl/⌘+Enter</b>. Values appear on the drawing. <b>0</b> fits the drawing to the window.</p>
+          <p><b>Transfer function:</b> shift-click two voltage probes, then press <b>Ratio</b> in the plot bar.</p>
         </div>
       )}
     </aside>
@@ -122,7 +123,7 @@ function ProbeInspector({ probe, dispatch, nodeAt }: { probe: Probe; dispatch: (
   const nodeOf = (pt?: [number, number]) => (pt ? nodeAt(pt) ?? '(not on a wire)' : '—');
   return (
     <aside className="inspector">
-      <h2>{probe.id} <span className="muted">— {probe.kind === 'v' ? 'Voltage probe' : probe.kind === 'i' ? 'Current probe' : 'Power probe'}</span></h2>
+      <h2>{probe.id} <span className="muted">— {probe.kind === 'v' ? 'Voltage probe' : probe.kind === 'i' ? 'Current probe' : probe.kind === 'p' ? 'Power probe' : 'Ratio (transfer function)'}</span></h2>
       <label className="field"><span>Label (optional)</span><input value={probe.label ?? ''} onChange={(e) => set({ label: e.target.value || undefined })} /></label>
       {probe.kind === 'v' && (
         <>
@@ -131,6 +132,7 @@ function ProbeInspector({ probe, dispatch, nodeAt }: { probe: Probe; dispatch: (
             : <p className="muted">Drag the small ○ next to the probe onto another wire to measure between two points.</p>}
         </>
       )}
+      {probe.kind === 'ratio' && <p>Plots <b>{probe.num}</b> divided by <b>{probe.den}</b> in a Frequency run: magnitude and phase of the transfer function.</p>}
       {(probe.kind === 'i' || probe.kind === 'p') && (
         <>
           <p>On part <b>{probe.element}</b>.</p>

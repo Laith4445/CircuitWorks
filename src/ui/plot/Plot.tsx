@@ -22,6 +22,12 @@ export interface PlotProps {
   onCursor?: (x: number | null) => void;
   cursors: { a: number | null; b: number | null };
   onCursors: (c: { a: number | null; b: number | null }) => void;
+  /** lift the hover position so several panels share one cursor */
+  hover?: number | null;
+  onHover?: (x: number | null) => void;
+  showTable?: boolean;
+  /** shown at the right of the y ticks instead of the first trace's unit */
+  yUnit?: string;
 }
 
 const M = { l: 64, r: 16, t: 12, b: 30 };
@@ -33,10 +39,12 @@ function fmt(v: number, unit: string): string {
   return formatSI(v, unit, 4);
 }
 
-export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, onCursor, cursors, onCursors }: PlotProps) {
+export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, onCursor, cursors, onCursors, hover: hoverProp, onHover, showTable = true, yUnit }: PlotProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
-  const [hover, setHover] = useState<number | null>(null);
+  const [hoverLocal, setHoverLocal] = useState<number | null>(null);
+  const hover = hoverProp !== undefined ? hoverProp : hoverLocal;
+  const setHover = (x: number | null) => { setHoverLocal(x); onHover?.(x); };
 
   useEffect(() => {
     const el = ref.current;
@@ -106,7 +114,7 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
   );
 
   const live = traces.filter((t) => !t.kept);
-  const table = (cursors.a !== null || cursors.b !== null) && (
+  const table = showTable && (cursors.a !== null || cursors.b !== null) && (
     <table className="cursor-table">
       <thead><tr><th></th>
         <th>A {cursors.a !== null ? `(${fmt(cursors.a, xUnit)})` : ''}</th>
@@ -150,7 +158,7 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
         {scales.yt.ticks.map((v) => (
           <g key={`y${v}`} className="tick">
             <line x1={M.l} x2={M.l + pw} y1={scales.sy(v)} y2={scales.sy(v)} />
-            <text x={M.l - 6} y={scales.sy(v) + 3} textAnchor="end">{fmt(v, live[0]?.unit ?? traces[0]?.unit ?? '')}</text>
+            <text x={M.l - 6} y={scales.sy(v) + 3} textAnchor="end">{fmt(v, yUnit ?? live[0]?.unit ?? traces[0]?.unit ?? '')}</text>
           </g>
         ))}
         <text x={M.l + pw / 2} y={height - 4} textAnchor="middle" className="axis-label">{xLabel}</text>
