@@ -21,6 +21,9 @@ export interface RunBarProps {
   derivedStep: number | null;
   autoRerun: boolean;
   onAutoRerun: (v: boolean) => void;
+  onExportDrawing: (kind: 'svg' | 'png') => void;
+  onExportPlot: () => void;
+  onHelp: () => void;
 }
 
 function Field({ label, value, unit, onChange }: { label: string; value: string; unit: string; onChange: (v: string) => void }) {
@@ -85,6 +88,13 @@ export function RunBar(p: RunBarProps) {
       <button onClick={p.onNew} title="Start a blank drawing">New</button>
       <button onClick={p.onExport} title="Save the circuit as a .json file">Save file</button>
       <label className="filebtn" title="Open a saved .json circuit">Open file<input type="file" accept=".json,application/json" onChange={(e) => { const f = e.target.files?.[0]; if (f) p.onImport(f); e.target.value = ''; }} /></label>
+      <select value="" onChange={(e) => { const v = e.target.value; e.target.value = ''; if (v === 'svg' || v === 'png') p.onExportDrawing(v); else if (v === 'plot') p.onExportPlot(); }} title="Export pictures for homework">
+        <option value="">Export…</option>
+        <option value="png">Drawing as PNG</option>
+        <option value="svg">Drawing as SVG</option>
+        <option value="plot">Plot as PNG</option>
+      </select>
+      <button onClick={p.onHelp} title="Keyboard reference and quick tour (?)">?</button>
       <button className="share" onClick={p.onShare} title="Copy a link to this circuit">Share ↗</button>
     </div>
   );

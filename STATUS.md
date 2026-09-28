@@ -1,6 +1,6 @@
 # STATUS.md — where CircuitWorks stands
 
-_Last updated: 2026-09-28 (session 2, milestones M1–M5)._
+_Last updated: 2026-09-28 (session 2, milestones M1–M6)._
 
 ## What works
 - **M0, the solver, is done and proven** (123 automated checks: every book value, plus
@@ -60,6 +60,13 @@ _Last updated: 2026-09-28 (session 2, milestones M1–M5)._
   run a small table gives the **average power over whole cycles** at the end
   of the run (the wattmeter reading); in a Frequency sweep a third panel plots
   average power against frequency and the cursor table also shows reactive power.
+- **M6, polish, is built.** First visit shows a four-step tour on a small
+  divider circuit (skippable, never shown again). The **?** button (or key)
+  opens a keyboard reference and can replay the tour. **Export…** saves the
+  drawing as PNG or SVG and plots as PNG for homework. Arrow keys nudge the
+  selection. A README with screenshots explains the project to newcomers, and
+  `npm run test:e2e` drives a real browser through building E1 from a blank
+  canvas and reading 870 mV.
 - The Self-Check page (`/#/selfcheck`) still shows 51 of 51 green.
 
 ## How to check it (plain language)
@@ -122,15 +129,23 @@ answer back.
    table reads about **438.6 nW**, averaged over 10 whole cycles (10–20 µs).
    The two methods agree within 1 %, as EXERCISES.md requires.
 
-## What's next (M6 — Polish for a first outside look)
-Onboarding overlay, keyboard reference, error-message review, export PNG/SVG,
-README with a demo, and the Playwright smoke test.
+## How to check M6
+1. In the app, open the browser's address without any `#…` part in a private
+   window (or clear site data): the tour appears over a divider circuit. Click
+   through it; it does not come back on reload. Press **?** for the reference.
+2. Load any example, Run, and use **Export… → Drawing as PNG**; open the file.
+3. Run `npm run test:e2e` in the project folder: **1 passed**.
+
+## What's next
+All six milestones are done. Open questions for the authors (SPEC §10): the
+name, hosting on GitHub Pages, confirming the E6 circuit reading, the peak
+amplitude convention, and whether the exercise panel belongs in the student app.
+Still to do before a wider release: a 2-minute demo GIF, a Chromebook test, and
+a pass on the exercise layouts so the example drawings look tidy.
 
 ## Known limitations / open questions
 - Op amp is ideal, no saturation (SPEC §4.2).
 - Node names in probe tooltips are automatic (n1, n2…); editable labels come later.
-- The Playwright browser test for E1 is deferred (see DECISIONS.md); the same
-  check was done by hand this session.
 - On very small windows the palette scrolls; the layout is meant for a laptop.
 - E6's circuit reading still needs confirming against the figure (SPEC §10.3).
 

@@ -107,3 +107,17 @@ button { font: inherit; }
 .initial-table th { font-weight: 600; background: #f3f4f6; }
 
 .boundary { padding: 12px; color: var(--danger); }
+
+.tour, .help { position: fixed; z-index: 20; background: #fff; border: 1px solid var(--accent); border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 12px 14px; width: 320px; }
+.tour h3, .help h3 { margin: 0 0 6px; font-size: 14px; }
+.tour p { margin: 0 0 10px; font-size: 13px; }
+.tour-buttons { display: flex; align-items: center; gap: 8px; }
+.tour-buttons .spacer { flex: 1; }
+.tour button, .help button { border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+.tour button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tour button.link, .help button.link { border: none; color: var(--accent); text-decoration: underline; padding: 0; }
+.help { right: 300px; top: 40px; width: 420px; max-height: 80vh; overflow: auto; }
+.help table { font-size: 12px; margin-bottom: 8px; }
+.help td { border: none; padding: 2px 8px 2px 0; vertical-align: top; }
+.help kbd { font-size: 11px; border: 1px solid #bbb; border-radius: 3px; padding: 0 4px; background: #f5f5f5; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

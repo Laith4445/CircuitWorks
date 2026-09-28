@@ -18,6 +18,10 @@ import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
 import { ErrorBoundary } from './ErrorBoundary';
+import { Onboarding, Help } from './Onboarding';
+import { exportPng, exportSvg } from '../share/exportImage';
+import { getFlag, setFlag } from '../share/storage';
+import { circuitBounds } from './geometry';
 import { Bode } from './plot/Bode';
 import { tracesFromTran, tracesFromAc, initialReadouts, averagePowers, valueAt, cleanTiny, type Trace, type InitialReadout, type AveragePower } from './traces';
 import { nextProbeId } from './state';
@@ -31,6 +35,25 @@ function exerciseCircuit(id: string): Circuit | null {
   const { exercise: _drop, ...rest } = ex;
   void _drop;
   return migrate(JSON.parse(JSON.stringify(rest)));
+}
+
+/** The onboarding circuit: a 5 V source into two 1 kΩ resistors. */
+function dividerCircuit(): Circuit {
+  return {
+    v: 1, grid: 10,
+    parts: [
+      { id: 'V1', type: 'Vdc', x: 60, y: 120, rot: 90, params: { V: '5' } },
+      { id: 'R1', type: 'R', x: 140, y: 100, rot: 90, params: { R: '1k' } },
+      { id: 'R2', type: 'R', x: 140, y: 180, rot: 90, params: { R: '1k' } },
+      { id: 'GND1', type: 'GND', x: 60, y: 220, rot: 0 },
+    ],
+    wires: [
+      { from: [60, 100], to: [60, 60] }, { from: [60, 60], to: [140, 60] }, { from: [140, 60], to: [140, 80] },
+      { from: [140, 120], to: [140, 160] }, { from: [140, 200], to: [140, 220] }, { from: [140, 220], to: [60, 220] }, { from: [60, 140], to: [60, 220] },
+    ],
+    probes: [{ id: 'P1', kind: 'v', nodeAt: [140, 140] }],
+    analysis: { kind: 'dc' }, labels: [],
+  };
 }
 
 export function Editor() {
@@ -59,6 +82,8 @@ export function Editor() {
   const [autoRerun, setAutoRerun] = useState(true);
   /** re-fit the drawing once the plot panel first takes space away from it */
   const firstPlot = useRef(true);
+  const [tour, setTour] = useState(false);
+  const [help, setHelp] = useState(false);
   /** last Time/Frequency run, so adding a probe can reuse it without re-solving */
   const lastRun = useRef<{ sig: string; ex: Extraction; result: TranResult | AcResult; ms: number } | null>(null);
   const tranSignature = (c: Circuit) => JSON.stringify({ p: c.parts, w: c.wires.map((w) => [w.from, w.to]), a: c.analysis });
@@ -93,6 +118,7 @@ export function Editor() {
       const saved = loadAutosave();
       if (saved && saved.parts.length && window.confirm('Restore your unsaved circuit from last time?')) loadCircuit(saved, 'Restored your unsaved circuit.');
       else if (saved && saved.parts.length) clearAutosave();
+      else if (!getFlag('tour')) { loadCircuit(dividerCircuit(), 'Welcome! Here is a two-resistor divider to try things on.'); setTour(true); }
     });
     const onHash = () => { void applyHash(); };
     window.addEventListener('hashchange', onHash);
@@ -280,6 +306,11 @@ export function Editor() {
           else dispatch({ type: 'rotateSelection' });
           return;
         case '0': setFitRequest((n) => n + 1); return;
+        case 'ArrowLeft': e.preventDefault(); dispatch({ type: 'moveSelection', dx: -10, dy: 0 }); return;
+        case 'ArrowRight': e.preventDefault(); dispatch({ type: 'moveSelection', dx: 10, dy: 0 }); return;
+        case 'ArrowUp': e.preventDefault(); dispatch({ type: 'moveSelection', dx: 0, dy: -10 }); return;
+        case 'ArrowDown': e.preventDefault(); dispatch({ type: 'moveSelection', dx: 0, dy: 10 }); return;
+        case '?': setHelp((h) => !h); return;
       }
       const k = e.key.toLowerCase();
       if (k === 'f') { if (s.tool.kind === 'place') dispatch({ type: 'setTool', tool: { ...s.tool, flip: !s.tool.flip } }); else dispatch({ type: 'flipSelection' }); return; }
@@ -322,6 +353,22 @@ export function Editor() {
     const [num, den] = selectedVoltageProbes;
     dispatch({ type: 'addProbe', probe: { id: nextProbeId(state.circuit), kind: 'ratio', num, den } });
   };
+  const exportDrawing = (kind: 'svg' | 'png') => {
+    const svg = document.querySelector<SVGSVGElement>('svg.canvas');
+    if (!svg) return;
+    const b = circuitBounds(state.circuit);
+    const vb = b ? `${b.x - 30} ${b.y - 30} ${b.w + 60} ${b.h + 60}` : undefined;
+    if (kind === 'svg') exportSvg(svg, 'circuit.svg', vb);
+    else void exportPng(svg, 'circuit.png', vb).catch((e) => setStatus({ kind: 'error', text: `Couldn't export: ${(e as Error).message}` }));
+  };
+  const exportPlot = () => {
+    const svgs = Array.from(document.querySelectorAll<SVGSVGElement>('.plot svg'));
+    if (!svgs.length) { setStatus({ kind: 'info', text: 'Run a Time or Frequency analysis first to have a plot to export.' }); return; }
+    svgs.forEach((svg, i) => {
+      const w = svg.getAttribute('width'), h = svg.getAttribute('height');
+      void exportPng(svg, svgs.length > 1 ? `plot-${i + 1}.png` : 'plot.png', `0 0 ${w} ${h}`).catch((e) => setStatus({ kind: 'error', text: `Couldn't export: ${(e as Error).message}` }));
+    });
+  };
   const addGround = () => {
     const p: Point | null = lowestPoint(state.circuit);
     if (!p) return;
@@ -360,7 +407,12 @@ export function Editor() {
         derivedStep={derivedStep}
         autoRerun={autoRerun}
         onAutoRerun={setAutoRerun}
+        onExportDrawing={exportDrawing}
+        onExportPlot={exportPlot}
+        onHelp={() => setHelp((h) => !h)}
       />
+      {tour && <Onboarding onDone={() => { setTour(false); setFlag('tour'); }} />}
+      {help && <Help onClose={() => setHelp(false)} onTour={() => { setHelp(false); setTour(true); }} />}
       {(traces.length > 0 || ac.mag.length > 0 || ac.power.length > 0) && (
         <section className={`plotpanel${plotOpen ? '' : ' collapsed'}`}><ErrorBoundary what="the plot">
           <div className="plotbar">
