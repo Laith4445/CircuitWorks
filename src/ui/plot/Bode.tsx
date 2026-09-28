@@ -36,13 +36,17 @@ export function Bode({ mag, phase, power = [], reactive = [], onCursor, cursors,
   };
   return (
     <div className="bode">
-      <Plot traces={magShown} xLabel="f" xUnit="Hz" yLabel={db ? 'magnitude (dB)' : 'magnitude'} xLog height={200}
-        cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} onCursor={onCursor} showTable={false} yUnit={db ? 'dB' : undefined} xRange={xRange} onXRange={setXRange} />
-      <Plot traces={phase} xLabel="f" xUnit="Hz" yLabel="phase (°)" xLog height={160}
-        cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="°" xRange={xRange} onXRange={setXRange} />
+      {mag.length > 0 && (
+        <Plot traces={magShown} xLabel="f" xUnit="Hz" yLabel={db ? 'magnitude (dB)' : 'magnitude'} xLog height={200}
+          cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} onCursor={onCursor} showTable={false} yUnit={db ? 'dB' : undefined} xRange={xRange} onXRange={setXRange} />
+      )}
+      {phase.length > 0 && (
+        <Plot traces={phase} xLabel="f" xUnit="Hz" yLabel="phase (°)" xLog height={160}
+          cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="°" xRange={xRange} onXRange={setXRange} />
+      )}
       {power.length > 0 && (
         <Plot traces={power} xLabel="f" xUnit="Hz" yLabel="average power (W)" xLog height={160}
-          cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="W" xRange={xRange} onXRange={setXRange} />
+          cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} onCursor={mag.length ? undefined : onCursor} showTable={false} yUnit="W" xRange={xRange} onXRange={setXRange} />
       )}
       {(cursors.a !== null || cursors.b !== null) && (
         <table className="cursor-table">

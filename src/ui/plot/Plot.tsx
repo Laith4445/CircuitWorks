@@ -80,7 +80,7 @@ export function Plot({ traces, xLabel, xUnit, yLabel, xLog, yLog, height = 240, 
         if (v > ymax) ymax = v;
       }
     }
-    if (!Number.isFinite(xmin)) { xmin = 0; xmax = 1; }
+    if (!Number.isFinite(xmin)) { xmin = xLog ? 1 : 0; xmax = xLog ? 10 : 1; }
     if (!Number.isFinite(ymin)) { ymin = 0; ymax = 1; }
     const xt = xLog ? (xRange ? logRangeTicks(xmin, xmax) : logTicks(xmin, xmax)) : linearTicks(xmin, xmax, 6);
     const yt = yLog ? logTicks(ymin, ymax) : linearTicks(ymin, ymax, 5);

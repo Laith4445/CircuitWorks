@@ -23,6 +23,8 @@ export function linearTicks(min: number, max: number, targetTicks = 5): { ticks:
 
 /** Log-axis ticks: every decade between the bounds (bounds snapped to decades). */
 export function logTicks(min: number, max: number): { ticks: number[]; lo: number; hi: number } {
+  if (!(min > 0) || !(max > 0) || !Number.isFinite(min) || !Number.isFinite(max)) { min = 1; max = 10; }
+  if (max < min) [min, max] = [max, min];
   const lo = Math.pow(10, Math.floor(Math.log10(min)));
   const hi = Math.pow(10, Math.ceil(Math.log10(max)));
   const ticks: number[] = [];
@@ -70,6 +72,7 @@ export function nearestIndex(xs: Float64Array, x: number): number {
 
 /** Ticks for a zoomed log axis: decades if several fit, otherwise 1-2-5 sub-steps, otherwise plain linear ticks. */
 export function logRangeTicks(min: number, max: number): { ticks: number[]; lo: number; hi: number } {
+  if (!(min > 0) || !(max > min)) return logTicks(min, max);
   const decades = Math.log10(max / min);
   if (decades >= 1.5) {
     const t = logTicks(min, max);

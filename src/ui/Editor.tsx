@@ -17,6 +17,7 @@ import { blankCircuit, initialState, reducer, type Tool } from './state';
 import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Bode } from './plot/Bode';
 import { tracesFromTran, tracesFromAc, initialReadouts, averagePowers, valueAt, cleanTiny, type Trace, type InitialReadout, type AveragePower } from './traces';
 import { nextProbeId } from './state';
@@ -338,7 +339,7 @@ export function Editor() {
   return (
     <div className="editor">
       <Palette tool={state.tool} dispatch={dispatch} />
-      <Canvas state={state} dispatch={dispatch} readouts={readouts} highlight={highlight} partInfo={partInfo} fitRequest={fitRequest} spaceHeld={spaceHeld} />
+      <ErrorBoundary what="the drawing"><Canvas state={state} dispatch={dispatch} readouts={readouts} highlight={highlight} partInfo={partInfo} fitRequest={fitRequest} spaceHeld={spaceHeld} /></ErrorBoundary>
       <Inspector circuit={state.circuit} selection={state.selection} dispatch={dispatch} nodeAt={ex.nodeAtPoint} />
       <RunBar
         analysis={state.circuit.analysis}
@@ -360,7 +361,7 @@ export function Editor() {
         onAutoRerun={setAutoRerun}
       />
       {(traces.length > 0 || ac.mag.length > 0 || ac.power.length > 0) && (
-        <section className={`plotpanel${plotOpen ? '' : ' collapsed'}`}>
+        <section className={`plotpanel${plotOpen ? '' : ' collapsed'}`}><ErrorBoundary what="the plot">
           <div className="plotbar">
             <strong>{ac.mag.length || ac.power.length ? 'Frequency plot' : 'Time plot'}</strong>
             <button onClick={() => setKept((k) => [...k, ...[...traces, ...ac.mag, ...ac.phase, ...ac.power].map((t) => ({ ...t, kept: true, label: `${t.label} (kept)` }))])} title="Keep these traces as ghosts so the next run draws on top">Keep</button>
@@ -407,7 +408,7 @@ export function Editor() {
           {plotOpen && ac.mag.length === 0 && ac.power.length === 0 && (
             <Plot traces={[...kept.filter((t) => !t.panel), ...traces]} xLabel="t" xUnit="s" yLabel={[...new Set(traces.map((t) => t.unit))].join(' / ')} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
           )}
-        </section>
+        </ErrorBoundary></section>
       )}
     </div>
   );

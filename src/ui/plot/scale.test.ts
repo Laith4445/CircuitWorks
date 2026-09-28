@@ -15,6 +15,11 @@ describe('axis ticks', () => {
     expect(t.lo).toBeLessThan(2);
     expect(t.hi).toBeGreaterThan(2);
   });
+  it('log ticks never explode on empty or non-positive ranges', () => {
+    expect(logTicks(0, 1).ticks.length).toBeLessThan(10);
+    expect(logTicks(Infinity, -Infinity).ticks.length).toBeLessThan(10);
+    expect(logRangeTicks(0, 0).ticks.length).toBeLessThan(10);
+  });
   it('log ticks are decades', () => {
     expect(logTicks(1e5, 1e7).ticks).toEqual([1e5, 1e6, 1e7]);
   });
