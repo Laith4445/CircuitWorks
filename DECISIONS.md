@@ -15,3 +15,12 @@ Format: date · decision · why. Newest at the bottom.
 - 2026-09-28 · Two-terminal parts draw horizontally at rotation 0 with pin a on the left; rotation 90 puts pin a on top. Ground has a single pin at its origin. Op amp: + at (−30,−10), − at (−30,+10), out at (+30,0).
 - 2026-09-28 · The E6 circuit is implemented exactly as read in EXERCISES.md (open question §10.3 still stands: confirm against fig_m6.1.png).
 - 2026-09-28 · Op-amp saturation is not modelled (known limitation, SPEC §4.2).
+- 2026-09-28 · M1 editor: a part placed from the palette/hotkey returns to the select tool after one click (press the key again for another). Easy to flip to "keep placing until Esc" if students prefer.
+- 2026-09-28 · Moving a part drags the ends of wires attached to its pins along (rubber-band), so moving never silently disconnects anything. Wires may become diagonal; extraction handles that.
+- 2026-09-28 · Space both rotates (the part being placed / the selection) and, held down, pans the canvas with a drag. If nothing is selected it only pans.
+- 2026-09-28 · Wire endpoint ids exist only in memory (for selection); saved files and links never contain them.
+- 2026-09-28 · Files/links written by M1 use the SPEC §5 format plus optional `flip` on a part and `dir` on a current probe. Older files without them load fine.
+- 2026-09-28 · Probe badges show 3 significant figures; hovering shows 5 and the reference direction. Node names in tooltips are automatic (n1, n2…) until labels are editable in a later milestone.
+- 2026-09-28 · "New" and "Restore unsaved circuit?" use the browser's built-in confirm dialog for now (the only modal dialogs in the app).
+- 2026-09-28 · Time and Frequency runs work from the run bar in M1 but only report "solved (N points)"; the plot panel is M2.
+- 2026-09-28 · Playwright smoke test (SPEC §7.3) deferred: it needs a browser download; the E1-from-blank-canvas check was done by hand in the built-in browser this session. Add it in M6 with the README.

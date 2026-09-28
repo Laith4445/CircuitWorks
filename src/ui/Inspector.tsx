@@ -41,12 +41,12 @@ function ValueField({ field, value, onChange }: { field: Field; value: string; o
   );
 }
 
-export function Inspector({ circuit, selection, dispatch, nodeNames }: { circuit: Circuit; selection: Selection; dispatch: (a: Action) => void; nodeNames: Record<string, string> }) {
+export function Inspector({ circuit, selection, dispatch, nodeAt }: { circuit: Circuit; selection: Selection; dispatch: (a: Action) => void; nodeAt: (p: [number, number]) => string | undefined }) {
   const part = selection.parts.length === 1 ? circuit.parts.find((p) => p.id === selection.parts[0]) : undefined;
   const probe = selection.probes.length === 1 ? circuit.probes.find((p) => p.id === selection.probes[0]) : undefined;
 
   if (part) return <PartInspector part={part} circuit={circuit} dispatch={dispatch} />;
-  if (probe) return <ProbeInspector probe={probe} dispatch={dispatch} nodeNames={nodeNames} />;
+  if (probe) return <ProbeInspector probe={probe} dispatch={dispatch} nodeAt={nodeAt} />;
   const n = selection.parts.length + selection.wires.length + selection.probes.length;
   return (
     <aside className="inspector">
@@ -117,9 +117,9 @@ function PartInspector({ part, circuit, dispatch }: { part: Part; circuit: Circu
   );
 }
 
-function ProbeInspector({ probe, dispatch, nodeNames }: { probe: Probe; dispatch: (a: Action) => void; nodeNames: Record<string, string> }) {
+function ProbeInspector({ probe, dispatch, nodeAt }: { probe: Probe; dispatch: (a: Action) => void; nodeAt: (p: [number, number]) => string | undefined }) {
   const set = (patch: Partial<Probe>) => dispatch({ type: 'updateProbe', id: probe.id, patch });
-  const nodeOf = (pt?: [number, number]) => (pt ? nodeNames[`${pt[0]},${pt[1]}`] ?? '?' : '—');
+  const nodeOf = (pt?: [number, number]) => (pt ? nodeAt(pt) ?? '(not on a wire)' : '—');
   return (
     <aside className="inspector">
       <h2>{probe.id} <span className="muted">— {probe.kind === 'v' ? 'Voltage probe' : probe.kind === 'i' ? 'Current probe' : 'Power probe'}</span></h2>

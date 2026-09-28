@@ -1,7 +1,7 @@
 /** The part palette: 13 parts + probes. Click to start placing; hotkeys shown. */
 import type { PartType } from '../schematic/model';
 import type { Action, Tool } from './state';
-import { Symbol, PART_NAMES } from './symbols';
+import { Symbol, PART_NAMES, SHORT_NAMES } from './symbols';
 
 const ITEMS: { type: PartType; key?: string }[] = [
   { type: 'R', key: 'R' }, { type: 'C', key: 'C' }, { type: 'L', key: 'L' }, { type: 'GND', key: 'G' },
@@ -25,7 +25,7 @@ export function Palette({ tool, dispatch }: { tool: Tool; dispatch: (a: Action) 
           <svg viewBox="-34 -24 68 48" width={56} height={34}>
             <g transform={it.type === 'GND' ? 'translate(0 -8)' : undefined}><Symbol part={{ id: it.type, type: it.type, x: 0, y: 0, rot: 0, params: it.type === 'SW' ? { init: 'closed' } : undefined }} /></g>
           </svg>
-          <span>{PART_NAMES[it.type]}</span>
+          <span>{SHORT_NAMES[it.type]}</span>
           {it.key && <kbd>{it.key}</kbd>}
         </button>
       ))}

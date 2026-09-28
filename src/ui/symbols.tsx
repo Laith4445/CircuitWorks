@@ -76,6 +76,12 @@ export const PART_NAMES: Record<PartType, string> = {
   CCVS: 'Current-controlled voltage source', CCCS: 'Current-controlled current source', OPAMP: 'Ideal op amp', SW: 'Switch',
 };
 
+/** Short names for the palette (the full name is the tooltip). */
+export const SHORT_NAMES: Record<PartType, string> = {
+  R: 'Resistor', C: 'Capacitor', L: 'Inductor', GND: 'Ground', Vdc: 'DC voltage', Idc: 'DC current',
+  Vwave: 'Waveform', VCVS: 'VCVS', VCCS: 'VCCS', CCVS: 'CCVS', CCCS: 'CCCS', OPAMP: 'Op amp', SW: 'Switch',
+};
+
 export const HOTKEYS: Record<string, PartType> = { r: 'R', c: 'C', l: 'L', g: 'GND', v: 'Vdc', i: 'Idc', o: 'OPAMP', s: 'SW' };
 
 /** The value string a part shows on the schematic. */

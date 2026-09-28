@@ -25,7 +25,7 @@ export function partBox(part: Part): { x: number; y: number; w: number; h: numbe
   const pins = pinPositions(part);
   let minX = part.x, maxX = part.x, minY = part.y, maxY = part.y;
   for (const p of pins) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
-  const pad = part.type === 'OPAMP' ? 12 : part.type === 'GND' ? 10 : 12;
+  const pad = part.type === 'OPAMP' ? 10 : part.type === 'GND' ? 8 : 7;
   return { x: minX - pad, y: minY - pad, w: maxX - minX + 2 * pad, h: maxY - minY + 2 * pad };
 }
 

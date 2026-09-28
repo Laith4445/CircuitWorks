@@ -231,13 +231,12 @@ export function Editor() {
   };
 
   const ex = useMemo(() => extract(state.circuit), [state.circuit]);
-  const nodeNames = useMemo(() => Object.fromEntries(ex.nodeOfPoint), [ex]);
 
   return (
     <div className="editor">
       <Palette tool={state.tool} dispatch={dispatch} />
       <Canvas state={state} dispatch={dispatch} readouts={readouts} highlight={highlight} partInfo={partInfo} fitRequest={fitRequest} spaceHeld={spaceHeld} />
-      <Inspector circuit={state.circuit} selection={state.selection} dispatch={dispatch} nodeNames={nodeNames} />
+      <Inspector circuit={state.circuit} selection={state.selection} dispatch={dispatch} nodeAt={ex.nodeAtPoint} />
       <RunBar
         analysis={state.circuit.analysis}
         dispatch={dispatch}
