@@ -72,7 +72,7 @@ export function RunBar(p: RunBarProps) {
           <Field label="To" value={a.fStop} unit="Hz" onChange={(v) => setA({ ...a, fStop: v })} />
         </>
       )}
-      <button className="run" onClick={p.onRun} title="Run (Ctrl/⌘+Enter)">▶ Run</button>
+      <button className="run" onClick={p.onRun} title="Solve the circuit with the selected analysis (Ctrl/⌘+Enter)">▶ Run analysis</button>
       <span className={`status ${p.status?.kind ?? ''}`}>
         {p.status?.text}
         {p.fixGround && <button className="link" onClick={p.fixGround}>Add ground at the lowest point?</button>}
@@ -99,7 +99,7 @@ export function RunBar(p: RunBarProps) {
         <option value="svg">Drawing as SVG</option>
         <option value="plot">Plot as PNG</option>
       </select>
-      <button onClick={p.onHelp} title="Keyboard reference and quick tour (press ?)">Help</button>
+      <button className="help-btn" onClick={p.onHelp} title="Keyboard reference and quick tour (press ?)"><span className="help-icon">?</span> Help</button>
       <button className="share" onClick={p.onShare} title="Copy a link to this circuit">Share ↗</button>
     </div>
   );

@@ -135,3 +135,5 @@ button { font: inherit; }
 .exercise-buttons { display: flex; gap: 8px; margin: 8px 0 4px; }
 .exercise-buttons button { border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
 .exercise-buttons button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.runbar button.help-btn { border-color: var(--accent); color: var(--accent); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.runbar button.help-btn .help-icon { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
