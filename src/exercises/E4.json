@@ -1,0 +1,62 @@
+{
+  "v": 1,
+  "grid": 10,
+  "parts": [
+    {"id":"V1","type":"Vwave","x":40,"y":120,"rot":90,"params":{"type":"step","v1":"0","v2":"24","td":"0","tr":"0"}},
+    {"id":"R1","type":"R","x":120,"y":60,"rot":0,"params":{"R":"12"}},
+    {"id":"L1","type":"L","x":200,"y":60,"rot":0,"params":{"L":"300m"}},
+    {"id":"C1","type":"C","x":260,"y":100,"rot":90,"params":{"C":"10m"}},
+    {"id":"G1","type":"GND","x":40,"y":160,"rot":0}
+  ],
+  "wires": [
+    {"from":[40,100],"to":[40,60]},
+    {"from":[40,60],"to":[100,60]},
+    {"from":[140,60],"to":[180,60]},
+    {"from":[220,60],"to":[260,60]},
+    {"from":[260,60],"to":[260,80]},
+    {"from":[260,120],"to":[260,160]},
+    {"from":[40,140],"to":[40,160]},
+    {"from":[40,160],"to":[260,160]}
+  ],
+  "probes": [
+    {"id":"P1","kind":"v","nodeAt":[240,60],"label":"v_C"}
+  ],
+  "analysis": {"kind":"tran","tEnd":"0.2"},
+  "labels": [
+    {"at":[70,60],"text":"a"},
+    {"at":[160,60],"text":"b"},
+    {"at":[240,60],"text":"c"}
+  ],
+  "exercise": {
+    "id": "E4",
+    "title": "Problems 6.60 / 6.62 — series RLC step response",
+    "problem": "24 V step into R = 12 Ω, L = 300 mH, C = 10 mF in series (energy-free start). Plot v_C(t) for 0–0.2 s, then change R for under-, critically- and over-damped responses.",
+    "checks": [
+      {"label":"v_C(0.02 s)","check":{"kind":"tran_v","node":"c","t":0.02},"expected":1.2336,"unit":"V","tolPct":1},
+      {"label":"v_C(0.05 s)","check":{"kind":"tran_v","node":"c","t":0.05},"expected":5.3484,"unit":"V","tolPct":1},
+      {"label":"v_C(0.10 s)","check":{"kind":"tran_v","node":"c","t":0.1},"expected":12.365,"unit":"V","tolPct":1},
+      {"label":"v_C(0.20 s)","check":{"kind":"tran_v","node":"c","t":0.2},"expected":20.181,"unit":"V","tolPct":1},
+      {"label":"overshoot above 24 V (should be none)","check":{"kind":"tran_overshoot","node":"c","above":24},"expected":0,"unit":"V","tolAbs":0.01}
+    ],
+    "variants": [
+      {
+        "id": "under",
+        "title": "6.62 underdamped, R = 2 Ω",
+        "params": {"R1": {"R": "2"}},
+        "checks": [
+          {"label":"peak v_C","check":{"kind":"tran_peak","node":"c","what":"value"},"expected":37.39,"unit":"V","tolPct":1},
+          {"label":"time of peak","check":{"kind":"tran_peak","node":"c","what":"time"},"expected":0.175,"unit":"s","tolPct":2}
+        ]
+      },
+      {
+        "id": "critical",
+        "title": "6.62 critically damped, R = 10.954 Ω",
+        "params": {"R1": {"R": "10.954"}},
+        "checks": [
+          {"label":"v_C(0.2 s)","check":{"kind":"tran_v","node":"c","t":0.2},"expected":21.103,"unit":"V","tolPct":1},
+          {"label":"overshoot above 24 V (should be none)","check":{"kind":"tran_overshoot","node":"c","above":24},"expected":0,"unit":"V","tolAbs":0.01}
+        ]
+      }
+    ]
+  }
+}

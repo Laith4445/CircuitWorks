@@ -1,0 +1,46 @@
+{
+  "v": 1,
+  "grid": 10,
+  "parts": [
+    {"id":"V1","type":"Vwave","x":40,"y":120,"rot":90,"params":{"type":"sine","vo":"0","va":"1","f":"1MEG","acMag":"1","acPhase":"0"}},
+    {"id":"L1","type":"L","x":120,"y":60,"rot":0,"params":{"L":"1m"}},
+    {"id":"C1","type":"C","x":200,"y":60,"rot":0,"params":{"C":"25.33p"}},
+    {"id":"R1","type":"R","x":260,"y":100,"rot":90,"params":{"R":"628.3"}},
+    {"id":"G1","type":"GND","x":40,"y":160,"rot":0}
+  ],
+  "wires": [
+    {"from":[40,100],"to":[40,60]},
+    {"from":[40,60],"to":[100,60]},
+    {"from":[140,60],"to":[180,60]},
+    {"from":[220,60],"to":[260,60]},
+    {"from":[260,60],"to":[260,80]},
+    {"from":[260,120],"to":[260,160]},
+    {"from":[40,140],"to":[40,160]},
+    {"from":[40,160],"to":[260,160]}
+  ],
+  "probes": [
+    {"id":"P1","kind":"v","nodeAt":[70,60],"label":"v_in"},
+    {"id":"P2","kind":"v","nodeAt":[240,60],"label":"v_out"}
+  ],
+  "analysis": {"kind":"ac","fStart":"100k","fStop":"10MEG","pointsPerDecade":100,"log":true},
+  "labels": [
+    {"at":[70,60],"text":"in"},
+    {"at":[160,60],"text":"x"},
+    {"at":[240,60],"text":"out"}
+  ],
+  "exercise": {
+    "id": "E5",
+    "title": "Problem 9.51 — series bandpass filter, frequency sweep",
+    "problem": "Series RLC bandpass with L = 1 mH, f0 = 1 MHz, Q = 10 (so C = 25.33 pF, R = 628.3 Ω). Sweep 100 kHz–10 MHz and plot H = V_R / V_s.",
+    "checks": [
+      {"label":"|H| at 1 MHz","check":{"kind":"ac_mag","node":"out","div":"in","f":1e6},"expected":1.0,"unit":"","tolPct":1},
+      {"label":"phase at 1 MHz","check":{"kind":"ac_phase","node":"out","div":"in","f":1e6},"expected":0,"unit":"°","tolAbs":1},
+      {"label":"|H| at 100 kHz","check":{"kind":"ac_mag","node":"out","div":"in","f":1e5},"expected":0.0101,"unit":"","tolPct":1},
+      {"label":"phase at 100 kHz","check":{"kind":"ac_phase","node":"out","div":"in","f":1e5},"expected":89.4,"unit":"°","tolAbs":1},
+      {"label":"|H| at 10 MHz","check":{"kind":"ac_mag","node":"out","div":"in","f":1e7},"expected":0.0101,"unit":"","tolPct":1},
+      {"label":"phase at 10 MHz","check":{"kind":"ac_phase","node":"out","div":"in","f":1e7},"expected":-89.4,"unit":"°","tolAbs":1},
+      {"label":"lower half-power frequency","check":{"kind":"ac_cutoff","node":"out","div":"in","level":0.70710678,"side":"low"},"expected":951200,"unit":"Hz","tolPct":0.5},
+      {"label":"upper half-power frequency","check":{"kind":"ac_cutoff","node":"out","div":"in","level":0.70710678,"side":"high"},"expected":1051200,"unit":"Hz","tolPct":0.5}
+    ]
+  }
+}

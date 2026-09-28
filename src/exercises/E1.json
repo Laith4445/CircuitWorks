@@ -1,0 +1,46 @@
+{
+  "v": 1,
+  "grid": 10,
+  "parts": [
+    {"id":"V1","type":"Vdc","x":40,"y":120,"rot":90,"params":{"V":"2.5"}},
+    {"id":"R1","type":"R","x":120,"y":100,"rot":90,"params":{"R":"10"}},
+    {"id":"R2","type":"R","x":200,"y":100,"rot":90,"params":{"R":"10"}},
+    {"id":"R3","type":"R","x":120,"y":180,"rot":90,"params":{"R":"15"}},
+    {"id":"R4","type":"R","x":200,"y":180,"rot":90,"params":{"R":"25"}},
+    {"id":"G1","type":"GND","x":40,"y":220,"rot":0}
+  ],
+  "wires": [
+    {"from":[40,100],"to":[40,60]},
+    {"from":[40,60],"to":[200,60]},
+    {"from":[120,60],"to":[120,80]},
+    {"from":[200,60],"to":[200,80]},
+    {"from":[120,120],"to":[120,140]},
+    {"from":[200,120],"to":[200,140]},
+    {"from":[120,140],"to":[200,140]},
+    {"from":[120,140],"to":[120,160]},
+    {"from":[200,140],"to":[200,160]},
+    {"from":[120,200],"to":[120,220]},
+    {"from":[200,200],"to":[200,220]},
+    {"from":[120,220],"to":[200,220]},
+    {"from":[40,140],"to":[40,220]},
+    {"from":[40,220],"to":[120,220]}
+  ],
+  "probes": [
+    {"id":"P1","kind":"v","nodeAt":[80,60],"refAt":[160,140],"label":"Vout"}
+  ],
+  "analysis": {"kind":"dc"},
+  "labels": [
+    {"at":[80,60],"text":"T"},
+    {"at":[160,140],"text":"M"}
+  ],
+  "exercise": {
+    "id": "E1",
+    "title": "Problem 2.74 — resistor bridge, DC",
+    "problem": "2.5 V source. Two 10 Ω resistors in parallel from T to M; 15 Ω and 25 Ω in parallel from M to ground. Find V_out = V(T) − V(M).",
+    "checks": [
+      {"label":"V(M)","check":{"kind":"dc_v","node":"M"},"expected":1.6304,"unit":"V","tolPct":0.1},
+      {"label":"V_out = V(T) − V(M)","check":{"kind":"dc_v","node":"T","ref":"M"},"expected":0.8696,"unit":"V","tolPct":0.1},
+      {"label":"I(V1) into + terminal (negative = source delivering)","check":{"kind":"dc_i","elem":"V1"},"expected":-0.17391,"unit":"A","tolPct":0.1}
+    ]
+  }
+}

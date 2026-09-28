@@ -1,0 +1,72 @@
+{
+  "v": 1,
+  "grid": 10,
+  "parts": [
+    {"id":"V1","type":"Vdc","x":40,"y":80,"rot":90,"params":{"V":"4.7"}},
+    {"id":"L1","type":"L","x":220,"y":80,"rot":90,"params":{"L":"3.3m"}},
+    {"id":"Rw","type":"R","x":220,"y":130,"rot":90,"params":{"R":"10"}},
+    {"id":"R2","type":"R","x":220,"y":180,"rot":90,"params":{"R":"100"}},
+    {"id":"C1","type":"C","x":260,"y":110,"rot":270,"params":{"C":"0.1u"}},
+    {"id":"R3","type":"R","x":260,"y":180,"rot":90,"params":{"R":"100"}},
+    {"id":"R1","type":"R","x":120,"y":240,"rot":90,"params":{"R":"680"}},
+    {"id":"Rsw","type":"R","x":180,"y":240,"rot":90,"params":{"R":"10"}},
+    {"id":"S1","type":"SW","x":180,"y":290,"rot":90,"params":{"init":"closed","toggle":"true"}},
+    {"id":"G1","type":"GND","x":40,"y":320,"rot":0}
+  ],
+  "wires": [
+    {"from":[40,60],"to":[40,40]},
+    {"from":[40,40],"to":[220,40]},
+    {"from":[220,40],"to":[260,40]},
+    {"from":[220,40],"to":[220,60]},
+    {"from":[260,40],"to":[260,90]},
+    {"from":[220,100],"to":[220,110]},
+    {"from":[220,150],"to":[220,160]},
+    {"from":[260,130],"to":[260,160]},
+    {"from":[120,200],"to":[180,200]},
+    {"from":[180,200],"to":[220,200]},
+    {"from":[220,200],"to":[260,200]},
+    {"from":[120,200],"to":[120,220]},
+    {"from":[180,200],"to":[180,220]},
+    {"from":[180,260],"to":[180,270]},
+    {"from":[180,310],"to":[180,320]},
+    {"from":[120,260],"to":[120,320]},
+    {"from":[40,100],"to":[40,320]},
+    {"from":[40,320],"to":[120,320]},
+    {"from":[120,320],"to":[180,320]}
+  ],
+  "probes": [
+    {"id":"P1","kind":"v","nodeAt":[260,145],"refAt":[130,40],"label":"v_C"},
+    {"id":"P2","kind":"i","element":"L1","label":"i_L"}
+  ],
+  "analysis": {"kind":"tran","tEnd":"2ms"},
+  "labels": [
+    {"at":[130,40],"text":"P"},
+    {"at":[150,200],"text":"N"},
+    {"at":[220,155],"text":"q"},
+    {"at":[220,105],"text":"r"},
+    {"at":[260,145],"text":"m"},
+    {"at":[180,265],"text":"s"}
+  ],
+  "exercise": {
+    "id": "E6",
+    "title": "Problem m6.1 — switch opens at t = 0, initial conditions",
+    "problem": "The switch has been closed a long time and opens at t = 0. Find v_C, i_C, i_L, v_L just before and just after the switch opens, and their final values. (Circuit reading per EXERCISES.md — to be confirmed against fig_m6.1.png.)",
+    "checks": [
+      {"label":"i_L just before (t = 0⁻)","check":{"kind":"tran_i","elem":"L1","t":0,"at":"0-"},"expected":0.03921,"unit":"A","tolPct":0.1},
+      {"label":"V(N) just before","check":{"kind":"tran_v","node":"N","t":0,"at":"0-"},"expected":0.3865,"unit":"V","tolPct":0.1},
+      {"label":"v_C just before (V(m) − V(P))","check":{"kind":"tran_ev","elem":"C1","t":0,"at":"0-"},"expected":-4.3135,"unit":"V","tolPct":0.1},
+      {"label":"i_C just before","check":{"kind":"tran_i","elem":"C1","t":0,"at":"0-"},"expected":0,"unit":"A","tolAbs":1e-9},
+      {"label":"v_L just before","check":{"kind":"tran_ev","elem":"L1","t":0,"at":"0-"},"expected":0,"unit":"V","tolAbs":1e-9},
+      {"label":"i_L just after (t = 0⁺, continuous)","check":{"kind":"tran_i","elem":"L1","t":0},"expected":0.03921,"unit":"A","tolPct":0.1},
+      {"label":"v_C just after (continuous)","check":{"kind":"tran_ev","elem":"C1","t":0},"expected":-4.3135,"unit":"V","tolPct":0.1},
+      {"label":"V(N) just after (jumps)","check":{"kind":"tran_v","node":"N","t":0},"expected":3.7556,"unit":"V","tolPct":0.1},
+      {"label":"i_C just after","check":{"kind":"tran_i","elem":"C1","t":0},"expected":0.03369,"unit":"A","tolPct":1},
+      {"label":"v_L just after","check":{"kind":"tran_ev","elem":"L1","t":0},"expected":-3.369,"unit":"V","tolPct":1},
+      {"label":"i_L final (t = 2 ms)","check":{"kind":"tran_i","elem":"L1","t":0.002},"expected":0.005949,"unit":"A","tolPct":1},
+      {"label":"V(N) final","check":{"kind":"tran_v","node":"N","t":0.002},"expected":4.0456,"unit":"V","tolPct":1},
+      {"label":"v_C final","check":{"kind":"tran_ev","elem":"C1","t":0.002},"expected":-0.6544,"unit":"V","tolPct":1},
+      {"label":"v_C maximum during ringing","check":{"kind":"tran_peak","node":"m","ref":"P","what":"value"},"expected":0.60,"unit":"V","tolPct":2},
+      {"label":"time of v_C maximum","check":{"kind":"tran_peak","node":"m","ref":"P","what":"time"},"expected":3.58e-5,"unit":"s","tolPct":2}
+    ]
+  }
+}
