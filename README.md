@@ -23,7 +23,9 @@ npm run dev
 ```
 
 Open the address it prints. Press **?** in the app for the keyboard reference.
-The **Examples…** menu loads any of the seven book exercises.
+The **Exercises…** menu offers each of the seven book exercises two ways:
+*Try it yourself* (blank canvas, the problem text, and a Check button that
+grades your probes against the book's answers) or as a *worked example*.
 
 ## What it does
 
@@ -60,7 +62,7 @@ The **Examples…** menu loads any of the seven book exercises.
 
 ## Checking that the physics is right
 
-`npm test` runs 166 checks: every reference value in `EXERCISES.md`, current
+`npm test` runs 176 checks: every reference value in `EXERCISES.md`, current
 balance at every node, power balance, and an energy check. The in-app
 **Self-Check** page (`/#/selfcheck`) shows the same comparison as a table.
 

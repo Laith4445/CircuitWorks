@@ -73,10 +73,18 @@ _Last updated: 2026-09-28 (session 2, milestones M1–M6)._
   selection. A README with screenshots explains the project to newcomers, and
   `npm run test:e2e` drives a real browser through building E1 from a blank
   canvas and reading 870 mV.
+- **Try-it-yourself mode (added after M6).** The Exercises… menu now has two
+  groups. *Try it yourself* opens a blank canvas with the problem text and a
+  list of what to measure; the student builds the circuit, adds probes, and
+  presses **Check**. Each book value is ticked when one of their probes reads
+  it within tolerance, whatever they named their parts. Wrong-sign readings get
+  a "flip the probe" hint; a missing probe says which kind to add. *Worked
+  examples* are the finished circuits (the old Examples menu). "Show the worked
+  example" swaps in the answer; Undo brings the student's drawing back.
 - The Self-Check page (`/#/selfcheck`) still shows 51 of 51 green.
 
 ## How to check it (plain language)
-1. In the project folder run `npm test` — expect **166 tests passed, 0 failed**.
+1. In the project folder run `npm test` — expect **176 tests passed, 0 failed**.
 2. Run `npm run dev` and open the address it prints (http://localhost:5173).
 3. **Build E1 from nothing:** press V, Space, click to place the source. Press R,
    Space, click, four times for the resistors. Press G, click, for the ground.
@@ -134,6 +142,14 @@ answer back.
 2. Click the **Time** tab, set End time to `20us`, press ⌘Enter. The wattmeter
    table reads about **438.6 nW**, averaged over 10 whole cycles (10–20 µs).
    The two methods agree within 1 %, as EXERCISES.md requires.
+
+## How to check try-it mode
+1. Exercises… → *Try it yourself* → E1. The panel on the right shows the
+   problem and three things to measure. Press Check with nothing drawn: a plain
+   message says the drawing is empty.
+2. Build E1 (or press "Show the worked example"), add probes, press Check:
+   **3 of 3 correct**. Change a resistor value and press Check again: the row
+   goes red with a hint naming the closest probe's reading.
 
 ## How to check M6
 1. In the app, open the browser's address without any `#…` part in a private
