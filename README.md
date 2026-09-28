@@ -22,7 +22,7 @@ npm install
 npm run dev
 ```
 
-Open the address it prints. Press **?** in the app for the keyboard reference.
+Open the address it prints. The **Help** button in the bottom bar (or the ? key) shows the keyboard reference.
 The **Exercises…** menu offers each of the seven book exercises two ways:
 *Try it yourself* (blank canvas, the problem text, and a Check button that
 grades your probes against the book's answers) or as a *worked example*.

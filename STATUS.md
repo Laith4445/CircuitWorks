@@ -67,7 +67,7 @@ _Last updated: 2026-09-28 (session 2, milestones M1–M6)._
   of the run (the wattmeter reading); in a Frequency sweep a third panel plots
   average power against frequency and the cursor table also shows reactive power.
 - **M6, polish, is built.** First visit shows a four-step tour on a small
-  divider circuit (skippable, never shown again). The **?** button (or key)
+  divider circuit (skippable, never shown again). The **Help** button (or the ? key)
   opens a keyboard reference and can replay the tour. **Export…** saves the
   drawing as PNG or SVG and plots as PNG for homework. Arrow keys nudge the
   selection. A README with screenshots explains the project to newcomers, and

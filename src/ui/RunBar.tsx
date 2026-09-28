@@ -99,7 +99,7 @@ export function RunBar(p: RunBarProps) {
         <option value="svg">Drawing as SVG</option>
         <option value="plot">Plot as PNG</option>
       </select>
-      <button onClick={p.onHelp} title="Keyboard reference and quick tour (?)">?</button>
+      <button onClick={p.onHelp} title="Keyboard reference and quick tour (press ?)">Help</button>
       <button className="share" onClick={p.onShare} title="Copy a link to this circuit">Share ↗</button>
     </div>
   );
