@@ -2,47 +2,313 @@
   "v": 1,
   "grid": 10,
   "parts": [
-    {"id":"V1","type":"Vdc","x":40,"y":120,"rot":90,"params":{"V":"15"}},
-    {"id":"R1","type":"R","x":120,"y":60,"rot":0,"params":{"R":"10"}},
-    {"id":"R2","type":"R","x":160,"y":100,"rot":90,"params":{"R":"30"}},
-    {"id":"R3","type":"R","x":200,"y":60,"rot":0,"params":{"R":"15"}},
-    {"id":"F1","type":"CCCS","x":260,"y":100,"rot":270,"params":{"gain":"1.5","ctrl":"R2"}},
-    {"id":"G1","type":"GND","x":40,"y":160,"rot":0}
+    {
+      "id": "V1",
+      "type": "Vdc",
+      "x": 40,
+      "y": 120,
+      "rot": 90,
+      "params": {
+        "V": "15"
+      }
+    },
+    {
+      "id": "R1",
+      "type": "R",
+      "x": 120,
+      "y": 60,
+      "rot": 0,
+      "params": {
+        "R": "10"
+      }
+    },
+    {
+      "id": "R2",
+      "type": "R",
+      "x": 160,
+      "y": 100,
+      "rot": 90,
+      "params": {
+        "R": "30"
+      }
+    },
+    {
+      "id": "R3",
+      "type": "R",
+      "x": 200,
+      "y": 60,
+      "rot": 0,
+      "params": {
+        "R": "15"
+      }
+    },
+    {
+      "id": "F1",
+      "type": "CCCS",
+      "x": 260,
+      "y": 100,
+      "rot": 270,
+      "params": {
+        "gain": "1.5",
+        "ctrl": "R2"
+      }
+    },
+    {
+      "id": "G1",
+      "type": "GND",
+      "x": 40,
+      "y": 160,
+      "rot": 0
+    }
   ],
   "wires": [
-    {"from":[40,100],"to":[40,60]},
-    {"from":[40,60],"to":[100,60]},
-    {"from":[140,60],"to":[180,60]},
-    {"from":[160,60],"to":[160,80]},
-    {"from":[160,120],"to":[160,160]},
-    {"from":[220,60],"to":[260,60]},
-    {"from":[260,60],"to":[260,80]},
-    {"from":[260,120],"to":[260,160]},
-    {"from":[40,140],"to":[40,160]},
-    {"from":[40,160],"to":[260,160]}
+    {
+      "from": [
+        40,
+        100
+      ],
+      "to": [
+        40,
+        60
+      ]
+    },
+    {
+      "from": [
+        40,
+        60
+      ],
+      "to": [
+        100,
+        60
+      ]
+    },
+    {
+      "from": [
+        140,
+        60
+      ],
+      "to": [
+        180,
+        60
+      ]
+    },
+    {
+      "from": [
+        160,
+        60
+      ],
+      "to": [
+        160,
+        80
+      ]
+    },
+    {
+      "from": [
+        160,
+        120
+      ],
+      "to": [
+        160,
+        160
+      ]
+    },
+    {
+      "from": [
+        220,
+        60
+      ],
+      "to": [
+        260,
+        60
+      ]
+    },
+    {
+      "from": [
+        260,
+        60
+      ],
+      "to": [
+        260,
+        80
+      ]
+    },
+    {
+      "from": [
+        260,
+        120
+      ],
+      "to": [
+        260,
+        160
+      ]
+    },
+    {
+      "from": [
+        40,
+        140
+      ],
+      "to": [
+        40,
+        160
+      ]
+    },
+    {
+      "from": [
+        40,
+        160
+      ],
+      "to": [
+        260,
+        160
+      ]
+    }
   ],
   "probes": [
-    {"id":"P1","kind":"v","nodeAt":[70,60],"refAt":[150,60],"label":"V_R1"},
-    {"id":"P2","kind":"v","nodeAt":[160,80],"label":"V_R2"},
-    {"id":"P3","kind":"v","nodeAt":[150,60],"refAt":[240,60],"label":"V_R3"}
+    {
+      "id": "P1",
+      "kind": "v",
+      "nodeAt": [
+        70,
+        60
+      ],
+      "refAt": [
+        150,
+        60
+      ],
+      "label": "V_R1"
+    },
+    {
+      "id": "P2",
+      "kind": "v",
+      "nodeAt": [
+        160,
+        80
+      ],
+      "label": "V_R2"
+    },
+    {
+      "id": "P3",
+      "kind": "v",
+      "nodeAt": [
+        150,
+        60
+      ],
+      "refAt": [
+        240,
+        60
+      ],
+      "label": "V_R3"
+    },
+    {
+      "id": "P4",
+      "kind": "v",
+      "nodeAt": [
+        240,
+        60
+      ],
+      "label": "V_c"
+    },
+    {
+      "id": "P5",
+      "kind": "i",
+      "element": "R2",
+      "dir": 1,
+      "label": "I"
+    }
   ],
-  "analysis": {"kind":"dc"},
+  "analysis": {
+    "kind": "dc"
+  },
   "labels": [
-    {"at":[70,60],"text":"a"},
-    {"at":[150,60],"text":"b"},
-    {"at":[240,60],"text":"c"}
+    {
+      "at": [
+        70,
+        60
+      ],
+      "text": "a"
+    },
+    {
+      "at": [
+        150,
+        60
+      ],
+      "text": "b"
+    },
+    {
+      "at": [
+        240,
+        60
+      ],
+      "text": "c"
+    }
   ],
   "exercise": {
     "id": "E2",
     "title": "Problem 2.76 — dependent current source, DC",
     "problem": "15 V source at a. R1 = 10 Ω a→b, R2 = 30 Ω b→ground, R3 = 15 Ω b→c. A current-controlled current source pushes 1.5·I(R2) from ground into c. Find the voltage across each resistor.",
     "checks": [
-      {"label":"V(b)","check":{"kind":"dc_v","node":"b"},"expected":18.0,"unit":"V","tolPct":0.1},
-      {"label":"V(c)","check":{"kind":"dc_v","node":"c"},"expected":31.5,"unit":"V","tolPct":0.1},
-      {"label":"I through R2","check":{"kind":"dc_i","elem":"R2"},"expected":0.6,"unit":"A","tolPct":0.1},
-      {"label":"V_R1 = V(a) − V(b)","check":{"kind":"dc_v","node":"a","ref":"b"},"expected":-3.0,"unit":"V","tolPct":0.1},
-      {"label":"V_R2 = V(b)","check":{"kind":"dc_v","node":"b"},"expected":18.0,"unit":"V","tolPct":0.1},
-      {"label":"V_R3 = V(b) − V(c)","check":{"kind":"dc_v","node":"b","ref":"c"},"expected":-13.5,"unit":"V","tolPct":0.1}
+      {
+        "label": "V(b)",
+        "check": {
+          "kind": "dc_v",
+          "node": "b"
+        },
+        "expected": 18.0,
+        "unit": "V",
+        "tolPct": 0.1
+      },
+      {
+        "label": "V(c)",
+        "check": {
+          "kind": "dc_v",
+          "node": "c"
+        },
+        "expected": 31.5,
+        "unit": "V",
+        "tolPct": 0.1
+      },
+      {
+        "label": "I through R2",
+        "check": {
+          "kind": "dc_i",
+          "elem": "R2"
+        },
+        "expected": 0.6,
+        "unit": "A",
+        "tolPct": 0.1
+      },
+      {
+        "label": "V_R1 = V(a) − V(b)",
+        "check": {
+          "kind": "dc_v",
+          "node": "a",
+          "ref": "b"
+        },
+        "expected": -3.0,
+        "unit": "V",
+        "tolPct": 0.1
+      },
+      {
+        "label": "V_R2 = V(b)",
+        "check": {
+          "kind": "dc_v",
+          "node": "b"
+        },
+        "expected": 18.0,
+        "unit": "V",
+        "tolPct": 0.1
+      },
+      {
+        "label": "V_R3 = V(b) − V(c)",
+        "check": {
+          "kind": "dc_v",
+          "node": "b",
+          "ref": "c"
+        },
+        "expected": -13.5,
+        "unit": "V",
+        "tolPct": 0.1
+      }
     ]
   }
 }

@@ -82,8 +82,13 @@ export function RunBar(p: RunBarProps) {
       <button onClick={() => p.dispatch({ type: 'redo' })} disabled={!p.canRedo} title="Redo (Ctrl/⌘+Shift+Z)">↷</button>
       <button onClick={p.onFit} title="Fit drawing to window (0)">Fit</button>
       <select value="" onChange={(e) => { if (e.target.value) p.onLoadExample(e.target.value); }} title="Load a book exercise">
-        <option value="">Examples…</option>
-        {p.examples.map((ex) => <option key={ex.id} value={ex.id}>{ex.id} — {ex.title}</option>)}
+        <option value="">Exercises…</option>
+        <optgroup label="Try it yourself (blank canvas + Check)">
+          {p.examples.map((ex) => <option key={`try:${ex.id}`} value={`try:${ex.id}`}>{ex.id} — {ex.title}</option>)}
+        </optgroup>
+        <optgroup label="Worked examples (already built)">
+          {p.examples.map((ex) => <option key={ex.id} value={ex.id}>{ex.id} — {ex.title}</option>)}
+        </optgroup>
       </select>
       <button onClick={p.onNew} title="Start a blank drawing">New</button>
       <button onClick={p.onExport} title="Save the circuit as a .json file">Save file</button>

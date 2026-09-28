@@ -2,47 +2,314 @@
   "v": 1,
   "grid": 10,
   "parts": [
-    {"id":"V1","type":"Vwave","x":40,"y":120,"rot":90,"params":{"type":"pulse","v1":"0","v2":"1","td":"1ms","tr":"1us","tf":"1us","pw":"2ms","per":"5ms"}},
-    {"id":"OA1","type":"OPAMP","x":150,"y":70,"rot":0},
-    {"id":"Rf","type":"R","x":220,"y":110,"rot":90,"params":{"R":"10k"}},
-    {"id":"Rs","type":"R","x":100,"y":190,"rot":90,"params":{"R":"10k"}},
-    {"id":"G1","type":"GND","x":40,"y":230,"rot":0}
+    {
+      "id": "V1",
+      "type": "Vwave",
+      "x": 40,
+      "y": 120,
+      "rot": 90,
+      "params": {
+        "type": "pulse",
+        "v1": "0",
+        "v2": "1",
+        "td": "1ms",
+        "tr": "1us",
+        "tf": "1us",
+        "pw": "2ms",
+        "per": "5ms"
+      }
+    },
+    {
+      "id": "OA1",
+      "type": "OPAMP",
+      "x": 150,
+      "y": 70,
+      "rot": 0
+    },
+    {
+      "id": "Rf",
+      "type": "R",
+      "x": 220,
+      "y": 110,
+      "rot": 90,
+      "params": {
+        "R": "10k"
+      }
+    },
+    {
+      "id": "Rs",
+      "type": "R",
+      "x": 100,
+      "y": 190,
+      "rot": 90,
+      "params": {
+        "R": "10k"
+      }
+    },
+    {
+      "id": "G1",
+      "type": "GND",
+      "x": 40,
+      "y": 230,
+      "rot": 0
+    }
   ],
   "wires": [
-    {"from":[40,100],"to":[40,60]},
-    {"from":[40,60],"to":[120,60]},
-    {"from":[180,70],"to":[220,70]},
-    {"from":[220,70],"to":[220,90]},
-    {"from":[220,130],"to":[220,150]},
-    {"from":[220,150],"to":[100,150]},
-    {"from":[120,80],"to":[100,80]},
-    {"from":[100,80],"to":[100,150]},
-    {"from":[100,150],"to":[100,170]},
-    {"from":[100,210],"to":[100,230]},
-    {"from":[40,140],"to":[40,230]},
-    {"from":[40,230],"to":[100,230]}
+    {
+      "from": [
+        40,
+        100
+      ],
+      "to": [
+        40,
+        60
+      ]
+    },
+    {
+      "from": [
+        40,
+        60
+      ],
+      "to": [
+        120,
+        60
+      ]
+    },
+    {
+      "from": [
+        180,
+        70
+      ],
+      "to": [
+        220,
+        70
+      ]
+    },
+    {
+      "from": [
+        220,
+        70
+      ],
+      "to": [
+        220,
+        90
+      ]
+    },
+    {
+      "from": [
+        220,
+        130
+      ],
+      "to": [
+        220,
+        150
+      ]
+    },
+    {
+      "from": [
+        220,
+        150
+      ],
+      "to": [
+        100,
+        150
+      ]
+    },
+    {
+      "from": [
+        120,
+        80
+      ],
+      "to": [
+        100,
+        80
+      ]
+    },
+    {
+      "from": [
+        100,
+        80
+      ],
+      "to": [
+        100,
+        150
+      ]
+    },
+    {
+      "from": [
+        100,
+        150
+      ],
+      "to": [
+        100,
+        170
+      ]
+    },
+    {
+      "from": [
+        100,
+        210
+      ],
+      "to": [
+        100,
+        230
+      ]
+    },
+    {
+      "from": [
+        40,
+        140
+      ],
+      "to": [
+        40,
+        230
+      ]
+    },
+    {
+      "from": [
+        40,
+        230
+      ],
+      "to": [
+        100,
+        230
+      ]
+    }
   ],
   "probes": [
-    {"id":"P1","kind":"v","nodeAt":[80,60],"label":"v_in"},
-    {"id":"P2","kind":"v","nodeAt":[200,70],"label":"v_out"}
+    {
+      "id": "P1",
+      "kind": "v",
+      "nodeAt": [
+        80,
+        60
+      ],
+      "label": "v_in"
+    },
+    {
+      "id": "P2",
+      "kind": "v",
+      "nodeAt": [
+        200,
+        70
+      ],
+      "label": "v_out"
+    },
+    {
+      "id": "P3",
+      "kind": "v",
+      "nodeAt": [
+        100,
+        120
+      ],
+      "label": "v_n"
+    },
+    {
+      "id": "P4",
+      "kind": "i",
+      "element": "Rf",
+      "dir": 1,
+      "label": "I_Rf"
+    }
   ],
-  "analysis": {"kind":"tran","tEnd":"10ms"},
+  "analysis": {
+    "kind": "tran",
+    "tEnd": "10ms"
+  },
   "labels": [
-    {"at":[80,60],"text":"in"},
-    {"at":[100,120],"text":"n"},
-    {"at":[200,70],"text":"out"}
+    {
+      "at": [
+        80,
+        60
+      ],
+      "text": "in"
+    },
+    {
+      "at": [
+        100,
+        120
+      ],
+      "text": "n"
+    },
+    {
+      "at": [
+        200,
+        70
+      ],
+      "text": "out"
+    }
   ],
   "exercise": {
     "id": "E3",
     "title": "Problem 4.62 — noninverting op amp, pulse input, transient",
     "problem": "Noninverting amplifier with Rf = Rs = 10 kΩ (gain 2), driven by a 0→1 V pulse (1 ms delay, 2 ms wide, 5 ms period). Plot v_in and v_out for 0–10 ms.",
     "checks": [
-      {"label":"v_out while pulse is high (t = 2 ms)","check":{"kind":"tran_v","node":"out","t":0.002},"expected":2.0,"unit":"V","tolPct":1},
-      {"label":"v_out while pulse is low (t = 0.5 ms)","check":{"kind":"tran_v","node":"out","t":0.0005},"expected":0,"unit":"V","tolAbs":1e-6},
-      {"label":"v_out after pulse ends (t = 4 ms)","check":{"kind":"tran_v","node":"out","t":0.004},"expected":0,"unit":"V","tolAbs":1e-6},
-      {"label":"v_out during second pulse (t = 7 ms)","check":{"kind":"tran_v","node":"out","t":0.007},"expected":2.0,"unit":"V","tolPct":1},
-      {"label":"V(n) = v_in (virtual short, t = 2 ms)","check":{"kind":"tran_v","node":"n","t":0.002},"expected":1.0,"unit":"V","tolPct":1},
-      {"label":"I(Rf) while high","check":{"kind":"tran_i","elem":"Rf","t":0.002},"expected":0.0001,"unit":"A","tolPct":1}
+      {
+        "label": "v_out while pulse is high (t = 2 ms)",
+        "check": {
+          "kind": "tran_v",
+          "node": "out",
+          "t": 0.002
+        },
+        "expected": 2.0,
+        "unit": "V",
+        "tolPct": 1
+      },
+      {
+        "label": "v_out while pulse is low (t = 0.5 ms)",
+        "check": {
+          "kind": "tran_v",
+          "node": "out",
+          "t": 0.0005
+        },
+        "expected": 0,
+        "unit": "V",
+        "tolAbs": 1e-06
+      },
+      {
+        "label": "v_out after pulse ends (t = 4 ms)",
+        "check": {
+          "kind": "tran_v",
+          "node": "out",
+          "t": 0.004
+        },
+        "expected": 0,
+        "unit": "V",
+        "tolAbs": 1e-06
+      },
+      {
+        "label": "v_out during second pulse (t = 7 ms)",
+        "check": {
+          "kind": "tran_v",
+          "node": "out",
+          "t": 0.007
+        },
+        "expected": 2.0,
+        "unit": "V",
+        "tolPct": 1
+      },
+      {
+        "label": "V(n) = v_in (virtual short, t = 2 ms)",
+        "check": {
+          "kind": "tran_v",
+          "node": "n",
+          "t": 0.002
+        },
+        "expected": 1.0,
+        "unit": "V",
+        "tolPct": 1
+      },
+      {
+        "label": "I(Rf) while high",
+        "check": {
+          "kind": "tran_i",
+          "elem": "Rf",
+          "t": 0.002
+        },
+        "expected": 0.0001,
+        "unit": "A",
+        "tolPct": 1
+      }
     ]
   }
 }

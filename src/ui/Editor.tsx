@@ -19,6 +19,9 @@ import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Onboarding, Help } from './Onboarding';
+import { ExercisePanel } from './ExercisePanel';
+import { grade, type GradeResult } from '../exercises/grade';
+import type { ExerciseFile } from '../exercises/check';
 import { exportPng, exportSvg } from '../share/exportImage';
 import { getFlag, setFlag } from '../share/storage';
 import { circuitBounds } from './geometry';
@@ -83,10 +86,19 @@ export function Editor() {
   /** re-fit the drawing once the plot panel first takes space away from it */
   const firstPlot = useRef(true);
   const [tour, setTour] = useState(false);
+  const [tryFile, setTryFile] = useState<ExerciseFile | null>(null);
+  const [gradeResult, setGradeResult] = useState<GradeResult | null>(null);
   const [help, setHelp] = useState(false);
   /** last Time/Frequency run, so adding a probe can reuse it without re-solving */
   const lastRun = useRef<{ sig: string; ex: Extraction; result: TranResult | AcResult; ms: number } | null>(null);
   const tranSignature = (c: Circuit) => JSON.stringify({ p: c.parts, w: c.wires.map((w) => [w.from, w.to]), a: c.analysis });
+
+  const startTry = useCallback((id: string) => {
+    const file = EXERCISES.find((e) => e.exercise.id === id);
+    if (!file) return;
+    setTryFile(file); setGradeResult(null);
+    loadCircuit({ ...blankCircuit(), analysis: JSON.parse(JSON.stringify(file.analysis)) }, `Try it yourself: ${id}. Build the circuit, add probes, press Check.`);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCircuit = useCallback((c: Circuit, message?: string) => {
     dispatch({ type: 'load', circuit: c });
@@ -111,6 +123,8 @@ export function Editor() {
         const c = exerciseCircuit(m[1]);
         if (c) { loadCircuit(c, `Loaded exercise ${m[1]}.`); return true; }
       }
+      const t = /^#\/try\/(E\d)$/.exec(location.hash);
+      if (t) { startTry(t[1]); return true; }
       return false;
     };
     void applyHash().then((loaded) => {
@@ -388,7 +402,15 @@ export function Editor() {
     <div className="editor">
       <Palette tool={state.tool} dispatch={dispatch} />
       <ErrorBoundary what="the drawing"><Canvas state={state} dispatch={dispatch} readouts={readouts} highlight={highlight} partInfo={partInfo} fitRequest={fitRequest} spaceHeld={spaceHeld} /></ErrorBoundary>
-      <Inspector circuit={state.circuit} selection={state.selection} dispatch={dispatch} nodeAt={ex.nodeAtPoint} />
+      <div className="inspector-column">
+        {tryFile && (
+          <ExercisePanel file={tryFile} result={gradeResult}
+            onCheck={() => { const g = grade(tryFile, state.circuit); setGradeResult(g); setStatus(g.error ? { kind: 'error', text: g.error } : { kind: g.passed === g.total ? 'ok' : 'info', text: `${g.passed} of ${g.total} correct.` }); }}
+            onSolution={() => { const c = exerciseCircuit(tryFile.exercise.id); if (c) { loadCircuit(c, 'This is the worked example. Undo brings your drawing back.'); } }}
+            onClose={() => { setTryFile(null); setGradeResult(null); history.replaceState(null, '', '#/'); }} />
+        )}
+        <Inspector circuit={state.circuit} selection={state.selection} dispatch={dispatch} nodeAt={ex.nodeAtPoint} />
+      </div>
       <RunBar
         analysis={state.circuit.analysis}
         dispatch={dispatch}
@@ -398,7 +420,10 @@ export function Editor() {
         onNew={() => { if (!state.circuit.parts.length || window.confirm('Start a new blank drawing? (Undo can bring the old one back.)')) { history.replaceState(null, '', '#/'); loadCircuit(blankCircuit()); } }}
         onExport={exportFile}
         onImport={(f) => void importFile(f)}
-        onLoadExample={(id) => { const c = exerciseCircuit(id); if (c) { history.replaceState(null, '', `#/exercise/${id}`); loadCircuit(c, `Loaded exercise ${id}. Press Run.`); } }}
+        onLoadExample={(id) => {
+          if (id.startsWith('try:')) { const ex = id.slice(4); history.replaceState(null, '', `#/try/${ex}`); startTry(ex); return; }
+          const c = exerciseCircuit(id); if (c) { history.replaceState(null, '', `#/exercise/${id}`); setTryFile(null); loadCircuit(c, `Loaded exercise ${id}. Press Run.`); }
+        }}
         canUndo={state.past.length > 0}
         canRedo={state.future.length > 0}
         status={status}

@@ -2,54 +2,321 @@
   "v": 1,
   "grid": 10,
   "parts": [
-    {"id":"V1","type":"Vwave","x":40,"y":120,"rot":90,"params":{"type":"sine","vo":"0","va":"1","f":"1MEG","acMag":"1","acPhase":"0"}},
-    {"id":"R1","type":"R","x":120,"y":60,"rot":0,"params":{"R":"25"}},
-    {"id":"C1","type":"C","x":180,"y":60,"rot":0,"params":{"C":"1n"}},
-    {"id":"L1","type":"L","x":240,"y":100,"rot":90,"params":{"L":"1u"}},
-    {"id":"RL","type":"R","x":300,"y":100,"rot":90,"params":{"R":"12.5"}},
-    {"id":"CL","type":"C","x":300,"y":150,"rot":90,"params":{"C":"1n"}},
-    {"id":"G1","type":"GND","x":40,"y":200,"rot":0}
+    {
+      "id": "V1",
+      "type": "Vwave",
+      "x": 40,
+      "y": 120,
+      "rot": 90,
+      "params": {
+        "type": "sine",
+        "vo": "0",
+        "va": "1",
+        "f": "1MEG",
+        "acMag": "1",
+        "acPhase": "0"
+      }
+    },
+    {
+      "id": "R1",
+      "type": "R",
+      "x": 120,
+      "y": 60,
+      "rot": 0,
+      "params": {
+        "R": "25"
+      }
+    },
+    {
+      "id": "C1",
+      "type": "C",
+      "x": 180,
+      "y": 60,
+      "rot": 0,
+      "params": {
+        "C": "1n"
+      }
+    },
+    {
+      "id": "L1",
+      "type": "L",
+      "x": 240,
+      "y": 100,
+      "rot": 90,
+      "params": {
+        "L": "1u"
+      }
+    },
+    {
+      "id": "RL",
+      "type": "R",
+      "x": 300,
+      "y": 100,
+      "rot": 90,
+      "params": {
+        "R": "12.5"
+      }
+    },
+    {
+      "id": "CL",
+      "type": "C",
+      "x": 300,
+      "y": 150,
+      "rot": 90,
+      "params": {
+        "C": "1n"
+      }
+    },
+    {
+      "id": "G1",
+      "type": "GND",
+      "x": 40,
+      "y": 200,
+      "rot": 0
+    }
   ],
   "wires": [
-    {"from":[40,100],"to":[40,60]},
-    {"from":[40,60],"to":[100,60]},
-    {"from":[140,60],"to":[160,60]},
-    {"from":[200,60],"to":[240,60]},
-    {"from":[240,60],"to":[240,80]},
-    {"from":[240,60],"to":[300,60]},
-    {"from":[300,60],"to":[300,80]},
-    {"from":[300,120],"to":[300,130]},
-    {"from":[300,170],"to":[300,200]},
-    {"from":[240,120],"to":[240,200]},
-    {"from":[40,140],"to":[40,200]},
-    {"from":[40,200],"to":[300,200]}
+    {
+      "from": [
+        40,
+        100
+      ],
+      "to": [
+        40,
+        60
+      ]
+    },
+    {
+      "from": [
+        40,
+        60
+      ],
+      "to": [
+        100,
+        60
+      ]
+    },
+    {
+      "from": [
+        140,
+        60
+      ],
+      "to": [
+        160,
+        60
+      ]
+    },
+    {
+      "from": [
+        200,
+        60
+      ],
+      "to": [
+        240,
+        60
+      ]
+    },
+    {
+      "from": [
+        240,
+        60
+      ],
+      "to": [
+        240,
+        80
+      ]
+    },
+    {
+      "from": [
+        240,
+        60
+      ],
+      "to": [
+        300,
+        60
+      ]
+    },
+    {
+      "from": [
+        300,
+        60
+      ],
+      "to": [
+        300,
+        80
+      ]
+    },
+    {
+      "from": [
+        300,
+        120
+      ],
+      "to": [
+        300,
+        130
+      ]
+    },
+    {
+      "from": [
+        300,
+        170
+      ],
+      "to": [
+        300,
+        200
+      ]
+    },
+    {
+      "from": [
+        240,
+        120
+      ],
+      "to": [
+        240,
+        200
+      ]
+    },
+    {
+      "from": [
+        40,
+        140
+      ],
+      "to": [
+        40,
+        200
+      ]
+    },
+    {
+      "from": [
+        40,
+        200
+      ],
+      "to": [
+        300,
+        200
+      ]
+    }
   ],
   "probes": [
-    {"id":"P1","kind":"p","nodeAt":[270,60],"element":"RL","label":"P_load"}
+    {
+      "id": "P1",
+      "kind": "p",
+      "nodeAt": [
+        270,
+        60
+      ],
+      "element": "RL",
+      "label": "P_load"
+    },
+    {
+      "id": "P2",
+      "kind": "i",
+      "element": "RL",
+      "dir": 1,
+      "label": "I_L"
+    }
   ],
-  "analysis": {"kind":"ac","fStart":"100k","fStop":"1G","pointsPerDecade":100,"log":true},
+  "analysis": {
+    "kind": "ac",
+    "fStart": "100k",
+    "fStop": "1G",
+    "pointsPerDecade": 100,
+    "log": true
+  },
   "labels": [
-    {"at":[70,60],"text":"a"},
-    {"at":[150,60],"text":"b"},
-    {"at":[270,60],"text":"c"},
-    {"at":[300,125],"text":"d"}
+    {
+      "at": [
+        70,
+        60
+      ],
+      "text": "a"
+    },
+    {
+      "at": [
+        150,
+        60
+      ],
+      "text": "b"
+    },
+    {
+      "at": [
+        270,
+        60
+      ],
+      "text": "c"
+    },
+    {
+      "at": [
+        300,
+        125
+      ],
+      "text": "d"
+    }
   ],
   "exercise": {
     "id": "E7",
     "title": "Problem 8.64 — wattmeter and AC power",
     "problem": "1 V peak, 1 MHz source into 25 Ω + 1 nF, then a 1 µH inductor to ground in parallel with the load Z_L = 12.5 Ω + 1 nF. Measure the average power absorbed by Z_L at 1 MHz with a wattmeter, then confirm with an AC sweep 100 kHz–1 GHz.",
     "checks": [
-      {"label":"|I_L| at 1 MHz","check":{"kind":"ac_i","elem":"RL","f":1e6},"expected":0.0002649,"unit":"A","tolPct":1},
-      {"label":"P_avg(Z_L) at 1 MHz from AC sweep","check":{"kind":"ac_power","node":"c","elem":"RL","f":1e6,"part":"P"},"expected":4.385e-7,"unit":"W","tolPct":1},
-      {"label":"Q(Z_L) at 1 MHz (reactive power)","check":{"kind":"ac_power","node":"c","elem":"RL","f":1e6,"part":"Q"},"expected":-5.583e-6,"unit":"VAR","tolPct":1}
+      {
+        "label": "|I_L| at 1 MHz",
+        "check": {
+          "kind": "ac_i",
+          "elem": "RL",
+          "f": 1000000.0
+        },
+        "expected": 0.0002649,
+        "unit": "A",
+        "tolPct": 1
+      },
+      {
+        "label": "P_avg(Z_L) at 1 MHz from AC sweep",
+        "check": {
+          "kind": "ac_power",
+          "node": "c",
+          "elem": "RL",
+          "f": 1000000.0,
+          "part": "P"
+        },
+        "expected": 4.385e-07,
+        "unit": "W",
+        "tolPct": 1
+      },
+      {
+        "label": "Q(Z_L) at 1 MHz (reactive power)",
+        "check": {
+          "kind": "ac_power",
+          "node": "c",
+          "elem": "RL",
+          "f": 1000000.0,
+          "part": "Q"
+        },
+        "expected": -5.583e-06,
+        "unit": "VAR",
+        "tolPct": 1
+      }
     ],
     "variants": [
       {
         "id": "wattmeter",
         "title": "8.64 time-domain wattmeter (average of v·i over whole cycles)",
-        "analysis": {"kind":"tran","tEnd":"20us"},
+        "analysis": {
+          "kind": "tran",
+          "tEnd": "20us"
+        },
         "checks": [
-          {"label":"P_avg(Z_L) from time-domain wattmeter (10–20 µs)","check":{"kind":"tran_pavg","node":"c","elem":"RL","tFrom":1e-5},"expected":4.385e-7,"unit":"W","tolPct":1}
+          {
+            "label": "P_avg(Z_L) from time-domain wattmeter (10–20 µs)",
+            "check": {
+              "kind": "tran_pavg",
+              "node": "c",
+              "elem": "RL",
+              "tFrom": 1e-05
+            },
+            "expected": 4.385e-07,
+            "unit": "W",
+            "tolPct": 1
+          }
         ]
       }
     ]
