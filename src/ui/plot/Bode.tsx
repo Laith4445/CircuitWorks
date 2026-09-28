@@ -10,6 +10,8 @@ import { toDb, valueAt, type Trace } from '../traces';
 export interface BodeProps {
   mag: Trace[];
   phase: Trace[];
+  power?: Trace[];
+  reactive?: Trace[];
   onCursor?: (x: number | null) => void;
   cursors: { a: number | null; b: number | null };
   onCursors: (c: { a: number | null; b: number | null }) => void;
@@ -21,7 +23,7 @@ function fmtMag(v: number, unit: string, db: boolean): string {
   return unit === '' ? v.toPrecision(4) : formatSI(v, unit, 4);
 }
 
-export function Bode({ mag, phase, onCursor, cursors, onCursors, db }: BodeProps) {
+export function Bode({ mag, phase, power = [], reactive = [], onCursor, cursors, onCursors, db }: BodeProps) {
   const [hover, setHover] = useState<number | null>(null);
   const [xRange, setXRange] = useState<[number, number] | null>(null);
   const magShown = db ? mag.map(toDb) : mag;
@@ -38,6 +40,10 @@ export function Bode({ mag, phase, onCursor, cursors, onCursors, db }: BodeProps
         cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} onCursor={onCursor} showTable={false} yUnit={db ? 'dB' : undefined} xRange={xRange} onXRange={setXRange} />
       <Plot traces={phase} xLabel="f" xUnit="Hz" yLabel="phase (°)" xLog height={160}
         cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="°" xRange={xRange} onXRange={setXRange} />
+      {power.length > 0 && (
+        <Plot traces={power} xLabel="f" xUnit="Hz" yLabel="average power (W)" xLog height={160}
+          cursors={cursors} onCursors={onCursors} hover={hover} onHover={setHover} showTable={false} yUnit="W" xRange={xRange} onXRange={setXRange} />
+      )}
       {(cursors.a !== null || cursors.b !== null) && (
         <table className="cursor-table">
           <thead><tr><th></th>
@@ -45,6 +51,13 @@ export function Bode({ mag, phase, onCursor, cursors, onCursors, db }: BodeProps
             <th>B {cursors.b !== null ? `(${formatSI(cursors.b, 'Hz', 4)})` : ''}</th>
             <th>Δ {cursors.a !== null && cursors.b !== null ? `(${formatSI(cursors.b - cursors.a, 'Hz', 4)})` : ''}</th></tr></thead>
           <tbody>
+            {power.filter((t) => !t.kept).map((t) => {
+              const q = reactive.find((x) => x.id === t.id && !x.kept);
+              const cell = (x: number | null) => (x === null ? '' : `${formatSI(valueAt(t, x), 'W', 4)}${q ? ` (Q = ${formatSI(valueAt(q, x), 'VAR', 4)})` : ''}`);
+              return (
+                <tr key={t.id}><td style={{ color: t.color }}>{t.label}</td><td>{cell(cursors.a)}</td><td>{cell(cursors.b)}</td><td></td></tr>
+              );
+            })}
             {live.map((t) => {
               const a = row(t, cursors.a), b = row(t, cursors.b);
               return (

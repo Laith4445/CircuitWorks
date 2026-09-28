@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EXERCISES } from '../exercises';
 import { extract, parseAnalysis } from '../schematic/extract';
 import { run, type TranResult } from '../engine';
-import { tracesFromTran, initialReadouts, valueAt } from './traces';
+import { tracesFromTran, initialReadouts, averagePowers, valueAt } from './traces';
 import type { Circuit } from '../schematic/model';
 
 function tran(id: string) {
@@ -64,5 +64,18 @@ describe('E6 initial-conditions table (before / just after / end)', () => {
     expect(rows.V_N.before).toBeCloseTo(0.3865, 3);
     expect(rows.V_N.after).toBeCloseTo(3.7556, 3);
     expect(rows.V_N.end).toBeCloseTo(4.0456, 3);
+  });
+});
+
+describe('E7 time-domain wattmeter', () => {
+  it('averages v·i over whole cycles and agrees with the AC value within 1 %', () => {
+    const file = EXERCISES.find((e) => e.exercise.id === 'E7')!;
+    const circuit: Circuit = { ...(file as Circuit), analysis: { kind: 'tran', tEnd: '20us' } };
+    const ex = extract(circuit);
+    const r = run(ex.netlist, parseAnalysis(circuit.analysis)).result as TranResult;
+    const rows = averagePowers(circuit, tracesFromTran(circuit, ex, r));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].cycles).toBe(10);
+    expect(Math.abs(rows[0].average - 4.385e-7) / 4.385e-7).toBeLessThan(0.01);
   });
 });

@@ -3,6 +3,7 @@ import type { AcResult, DcResult, TranResult } from '../engine';
 import type { Circuit } from '../schematic/model';
 import type { Extraction } from '../schematic/extract';
 import { probeColor, probeLetter } from './state';
+import { parseValue } from '../engine/units';
 
 export interface Trace {
   id: string;
@@ -14,7 +15,7 @@ export interface Trace {
   /** a "kept" ghost from a previous run: drawn dashed and lighter */
   kept?: boolean;
   /** which panel of a multi-panel plot this belongs to */
-  panel?: 'mag' | 'phase';
+  panel?: 'mag' | 'phase' | 'power';
 }
 
 export function probeLabel(circuit: Circuit, id: string): string {
@@ -44,8 +45,11 @@ export function tracesFromTran(circuit: Circuit, ex: Extraction, r: TranResult):
         for (let k = 0; k < y.length; k++) y[k] = r.i[pr.element][k] * d;
         out.push({ ...base, unit: 'A', y });
       } else {
-        const va = r.v[el.nodes[0]], vb = r.v[el.nodes[1]];
-        for (let k = 0; k < y.length; k++) y[k] = (va[k] - vb[k]) * r.i[pr.element][k];
+        const nodes = wattmeterNodes(ex, pr, el.nodes);
+        if (!nodes) continue;
+        const va = r.v[nodes[0]], vb = r.v[nodes[1]];
+        const d = pr.dir ?? 1;
+        for (let k = 0; k < y.length; k++) y[k] = (va[k] - vb[k]) * r.i[pr.element][k] * d;
         out.push({ ...base, unit: 'W', y });
       }
     }
@@ -53,9 +57,23 @@ export function tracesFromTran(circuit: Circuit, ex: Extraction, r: TranResult):
   return out;
 }
 
-/** Complex traces for the frequency sweep: magnitude (linear) and unwrapped phase per probe. */
-export function tracesFromAc(circuit: Circuit, ex: Extraction, r: AcResult): { mag: Trace[]; phase: Trace[] } {
-  const mag: Trace[] = [], phase: Trace[] = [];
+/**
+ * Which two nodes a power probe measures voltage across: its own voltage points
+ * if it has them (a wattmeter), otherwise the part's two pins.
+ */
+export function wattmeterNodes(ex: Extraction, pr: { nodeAt?: [number, number]; refAt?: [number, number] }, elementNodes: string[]): [string, string] | null {
+  if (pr.nodeAt) {
+    const n = ex.nodeAtPoint(pr.nodeAt);
+    const ref = pr.refAt ? ex.nodeAtPoint(pr.refAt) : '0';
+    if (n === undefined || ref === undefined) return null;
+    return [n, ref];
+  }
+  return [elementNodes[0], elementNodes[1]];
+}
+
+/** Complex traces for the frequency sweep: magnitude (linear) and unwrapped phase per probe, plus average (P) and reactive (Q) power for power probes. */
+export function tracesFromAc(circuit: Circuit, ex: Extraction, r: AcResult): { mag: Trace[]; phase: Trace[]; power: Trace[]; reactive: Trace[] } {
+  const mag: Trace[] = [], phase: Trace[] = [], power: Trace[] = [], reactive: Trace[] = [];
   const complex = new Map<string, { re: Float64Array; im: Float64Array; unit: string }>();
   for (const pr of circuit.probes) {
     if (pr.kind === 'v' && pr.nodeAt) {
@@ -85,6 +103,23 @@ export function tracesFromAc(circuit: Circuit, ex: Extraction, r: AcResult): { m
     complex.set(pr.id, { re, im, unit: a.unit === b.unit ? '' : `${a.unit}/${b.unit}` });
   }
   for (const pr of circuit.probes) {
+    if (pr.kind !== 'p' || !pr.element || !r.i[pr.element]) continue;
+    const el = ex.netlist.elements.find((e) => e.id === pr.element)!;
+    const nodes = wattmeterNodes(ex, pr, el.nodes);
+    if (!nodes || !r.v[nodes[0]] || !r.v[nodes[1]]) continue;
+    const P = new Float64Array(r.f.length), Q = new Float64Array(r.f.length);
+    const d = pr.dir ?? 1;
+    for (let k = 0; k < P.length; k++) {
+      const vre = r.v[nodes[0]].re[k] - r.v[nodes[1]].re[k], vim = r.v[nodes[0]].im[k] - r.v[nodes[1]].im[k];
+      const ire = r.i[pr.element].re[k] * d, iim = r.i[pr.element].im[k] * d;
+      P[k] = 0.5 * (vre * ire + vim * iim);          // S = ½ V I*  (peak-amplitude phasors)
+      Q[k] = 0.5 * (vim * ire - vre * iim);
+    }
+    const base = { id: pr.id, label: probeLabel(circuit, pr.id), color: probeColor(circuit, pr.id), x: r.f };
+    power.push({ ...base, unit: 'W', y: P, panel: 'power' });
+    reactive.push({ ...base, unit: 'VAR', y: Q, panel: 'power' });
+  }
+  for (const pr of circuit.probes) {
     const c = complex.get(pr.id);
     if (!c) continue;
     const m = new Float64Array(r.f.length), p = new Float64Array(r.f.length);
@@ -94,7 +129,7 @@ export function tracesFromAc(circuit: Circuit, ex: Extraction, r: AcResult): { m
     mag.push({ ...base, unit: c.unit, y: m, panel: 'mag' });
     phase.push({ ...base, unit: '°', y: p, panel: 'phase' });
   }
-  return { mag, phase };
+  return { mag, phase, power, reactive };
 }
 
 /** Magnitude trace in dB (20·log10). Zero magnitudes become -300 dB so the axis stays finite. */
@@ -139,7 +174,9 @@ export function probeValueDc(circuit: Circuit, ex: Extraction, dc: DcResult, id:
     const el = ex.netlist.elements.find((e) => e.id === pr.element)!;
     const i = dc.i[pr.element];
     if (pr.kind === 'i') return { value: i * (pr.dir ?? 1), unit: 'A' };
-    return { value: (dc.v[el.nodes[0]] - dc.v[el.nodes[1]]) * i, unit: 'W' };
+    const nodes = wattmeterNodes(ex, pr, el.nodes);
+    if (!nodes) return null;
+    return { value: (dc.v[nodes[0]] - dc.v[nodes[1]]) * i * (pr.dir ?? 1), unit: 'W' };
   }
   return null;
 }
@@ -167,4 +204,46 @@ export function initialReadouts(circuit: Circuit, ex: Extraction, r: TranResult)
 /** Numbers that are only floating-point noise next to their companions read as 0 (SPEC §9.12). */
 export function cleanTiny(v: number, scale: number): number {
   return Math.abs(v) < scale * 1e-9 ? 0 : v;
+}
+
+/** The longest period among sine sources, or null if there are none. */
+export function fundamentalPeriod(circuit: Circuit): number | null {
+  let T: number | null = null;
+  for (const part of circuit.parts) {
+    if (part.type !== 'Vwave' || (part.params?.type ?? 'pulse') !== 'sine') continue;
+    try {
+      const f = parseValue(part.params?.f ?? '');
+      if (f > 0) T = Math.max(T ?? 0, 1 / f);
+    } catch { /* ignore unparsable */ }
+  }
+  return T;
+}
+
+export interface AveragePower { id: string; label: string; color: string; average: number; from: number; to: number; cycles: number | null }
+
+/**
+ * Wattmeter reading: the average of v·i over whole cycles at the end of the
+ * run (after start-up), or over the second half of the run if there is no
+ * sine source to define a cycle.
+ */
+export function averagePower(t: Trace, period: number | null): { average: number; from: number; to: number; cycles: number | null } {
+  const tEnd = t.x[t.x.length - 1];
+  let from = tEnd / 2, cycles: number | null = null;
+  if (period && period > 0 && period <= tEnd / 2) {
+    cycles = Math.floor(tEnd / 2 / period);
+    from = tEnd - cycles * period;
+  }
+  let sum = 0, span = 0;
+  for (let k = 1; k < t.x.length; k++) {
+    if (t.x[k - 1] < from) continue;
+    const h = t.x[k] - t.x[k - 1];
+    sum += 0.5 * (t.y[k] + t.y[k - 1]) * h;
+    span += h;
+  }
+  return { average: span > 0 ? sum / span : NaN, from, to: tEnd, cycles };
+}
+
+export function averagePowers(circuit: Circuit, traces: Trace[]): AveragePower[] {
+  const T = fundamentalPeriod(circuit);
+  return traces.filter((t) => t.unit === 'W').map((t) => ({ id: t.id, label: t.label, color: t.color, ...averagePower(t, T) }));
 }

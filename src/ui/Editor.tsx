@@ -18,7 +18,7 @@ import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
 import { Bode } from './plot/Bode';
-import { tracesFromTran, tracesFromAc, initialReadouts, valueAt, cleanTiny, type Trace, type InitialReadout } from './traces';
+import { tracesFromTran, tracesFromAc, initialReadouts, averagePowers, valueAt, cleanTiny, type Trace, type InitialReadout, type AveragePower } from './traces';
 import { nextProbeId } from './state';
 import { nextId } from './state';
 
@@ -46,7 +46,8 @@ export function Editor() {
   stateRef.current = state;
   const [traces, setTraces] = useState<Trace[]>([]);
   /** frequency-sweep traces (magnitude + phase); empty when the last run was a Time run */
-  const [ac, setAc] = useState<{ mag: Trace[]; phase: Trace[] }>({ mag: [], phase: [] });
+  const [ac, setAc] = useState<{ mag: Trace[]; phase: Trace[]; power: Trace[]; reactive: Trace[] }>({ mag: [], phase: [], power: [], reactive: [] });
+  const [avgPower, setAvgPower] = useState<AveragePower[]>([]);
   const [kept, setKept] = useState<Trace[]>([]);
   const [db, setDb] = useState(true);
   const [initial, setInitial] = useState<InitialReadout[]>([]);
@@ -64,7 +65,7 @@ export function Editor() {
   const loadCircuit = useCallback((c: Circuit, message?: string) => {
     dispatch({ type: 'load', circuit: c });
     setReadouts({}); setPartInfo({}); setHighlight(new Set()); setNeedsGround(false);
-    setTraces([]); setInitial([]); setAc({ mag: [], phase: [] }); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
+    setTraces([]); setInitial([]); setAvgPower([]); setAc({ mag: [], phase: [], power: [], reactive: [] }); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
     hasRun.current = false;
     setStatus(message ? { kind: 'info', text: message } : null);
     setTimeout(() => setFitRequest((n) => n + 1), 0);
@@ -160,8 +161,9 @@ export function Editor() {
         const tr = tracesFromTran(circuit, ex, r);
         setTraces(tr);
         setInitial(initialReadouts(circuit, ex, r));
+        setAvgPower(averagePowers(circuit, tr));
         setTEndLabel(formatSI(r.t[r.t.length - 1], 's'));
-        setAc({ mag: [], phase: [] });
+        setAc({ mag: [], phase: [], power: [], reactive: [] });
         setPlotOpen(true);
         setPartInfo({});
         if (firstPlot.current) { firstPlot.current = false; setTimeout(() => setFitRequest((n) => n + 1), 50); }
@@ -204,7 +206,7 @@ export function Editor() {
     if ((kind === 'tran' || kind === 'ac') && lastRun.current && lastRun.current.result.kind === kind) {
       const lr = lastRun.current;
       if (lr.sig === tranSignature(state.circuit)) {
-        if (lr.result.kind === 'tran') { setTraces(tracesFromTran(state.circuit, lr.ex, lr.result)); setInitial(initialReadouts(state.circuit, lr.ex, lr.result)); }
+        if (lr.result.kind === 'tran') { const tr = tracesFromTran(state.circuit, lr.ex, lr.result); setTraces(tr); setInitial(initialReadouts(state.circuit, lr.ex, lr.result)); setAvgPower(averagePowers(state.circuit, tr)); }
         else setAc(tracesFromAc(state.circuit, lr.ex, lr.result));
         return;
       }
@@ -217,8 +219,15 @@ export function Editor() {
 
   // probe badges for Frequency runs: magnitude at the cursor (or at the highest frequency)
   useEffect(() => {
-    if (!ac.mag.length) return;
+    if (!ac.mag.length && !ac.power.length) return;
     const ro: Record<string, ProbeReadout> = {};
+    for (const t of ac.power) {
+      const x = cursorX ?? t.x[t.x.length - 1];
+      const P = valueAt(t, x);
+      const q = ac.reactive.find((z) => z.id === t.id);
+      const Q = q ? valueAt(q, x) : 0;
+      ro[t.id] = { text: formatSI(P, 'W'), tooltip: `${t.label} at ${formatSI(x, 'Hz', 4)}: average power ${formatSI(P, 'W', 5)}, reactive ${formatSI(Q, 'VAR', 5)} (absorbed; source amplitudes are peak values)${cursorX === null ? ' (top of sweep; hover the plot for other frequencies)' : ''}` };
+    }
     for (const t of ac.mag) {
       const x = cursorX ?? t.x[t.x.length - 1];
       const m = valueAt(t, x);
@@ -350,22 +359,37 @@ export function Editor() {
         autoRerun={autoRerun}
         onAutoRerun={setAutoRerun}
       />
-      {(traces.length > 0 || ac.mag.length > 0) && (
+      {(traces.length > 0 || ac.mag.length > 0 || ac.power.length > 0) && (
         <section className={`plotpanel${plotOpen ? '' : ' collapsed'}`}>
           <div className="plotbar">
-            <strong>{ac.mag.length ? 'Frequency plot' : 'Time plot'}</strong>
-            <button onClick={() => setKept((k) => [...k, ...[...traces, ...ac.mag, ...ac.phase].map((t) => ({ ...t, kept: true, label: `${t.label} (kept)` }))])} title="Keep these traces as ghosts so the next run draws on top">Keep</button>
+            <strong>{ac.mag.length || ac.power.length ? 'Frequency plot' : 'Time plot'}</strong>
+            <button onClick={() => setKept((k) => [...k, ...[...traces, ...ac.mag, ...ac.phase, ...ac.power].map((t) => ({ ...t, kept: true, label: `${t.label} (kept)` }))])} title="Keep these traces as ghosts so the next run draws on top">Keep</button>
             <button onClick={() => setKept([])} disabled={!kept.length}>Clear kept{kept.length ? ` (${kept.length})` : ''}</button>
-            {ac.mag.length > 0 && <button onClick={() => setDb((d) => !d)} title="Show magnitude in decibels or as a plain ratio">{db ? 'dB' : 'linear'}</button>}
+            {(ac.mag.length > 0) && <button onClick={() => setDb((d) => !d)} title="Show magnitude in decibels or as a plain ratio">{db ? 'dB' : 'linear'}</button>}
             <button onClick={makeRatio} disabled={selectedVoltageProbes.length !== 2} title="Select two voltage probes (shift-click) and press Ratio to plot the first divided by the second (a transfer function)">Ratio</button>
             <span className="muted small">Hover for values · click pins cursor A, again B · wheel zooms · double-click resets</span>
             <span className="spacer" />
             <button onClick={() => setPlotOpen((o) => !o)}>{plotOpen ? 'Hide' : 'Show'}</button>
           </div>
-          {plotOpen && ac.mag.length > 0 && (
-            <Bode mag={[...kept.filter((t) => t.panel === 'mag'), ...ac.mag]} phase={[...kept.filter((t) => t.panel === 'phase'), ...ac.phase]} db={db} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
+          {plotOpen && (ac.mag.length > 0 || ac.power.length > 0) && (
+            <Bode mag={[...kept.filter((t) => t.panel === 'mag'), ...ac.mag]} phase={[...kept.filter((t) => t.panel === 'phase'), ...ac.phase]}
+              power={[...kept.filter((t) => t.panel === 'power'), ...ac.power]} reactive={ac.reactive} db={db} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
           )}
-          {plotOpen && ac.mag.length === 0 && initial.length > 0 && (
+          {plotOpen && ac.mag.length === 0 && ac.power.length === 0 && avgPower.length > 0 && (
+            <table className="initial-table" title="Wattmeter: the average of v × i over whole cycles at the end of the run, after start-up. With no sine source the second half of the run is averaged.">
+              <thead><tr><th>Wattmeter</th><th>average power</th><th>averaged over</th></tr></thead>
+              <tbody>
+                {avgPower.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ color: row.color }}>{row.label}</td>
+                    <td>{formatSI(row.average, 'W', 4)}</td>
+                    <td className="muted">{formatSI(row.from, 's')} – {formatSI(row.to, 's')}{row.cycles ? ` (${row.cycles} whole cycle${row.cycles === 1 ? '' : 's'})` : ' (second half of the run)'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {plotOpen && ac.mag.length === 0 && ac.power.length === 0 && initial.length > 0 && (
             <table className="initial-table" title="Just before t = 0: switches in their starting state, steady state. Just after: switches flipped; capacitor voltages and inductor currents can't jump, everything else can.">
               <thead><tr><th>Probe</th><th>just before t = 0 (0⁻)</th><th>just after (0⁺)</th><th>end of run (t = {tEndLabel})</th></tr></thead>
               <tbody>
@@ -380,7 +404,7 @@ export function Editor() {
               </tbody>
             </table>
           )}
-          {plotOpen && ac.mag.length === 0 && (
+          {plotOpen && ac.mag.length === 0 && ac.power.length === 0 && (
             <Plot traces={[...kept.filter((t) => !t.panel), ...traces]} xLabel="t" xUnit="s" yLabel={[...new Set(traces.map((t) => t.unit))].join(' / ')} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
           )}
         </section>

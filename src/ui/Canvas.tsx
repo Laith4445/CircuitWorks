@@ -84,7 +84,7 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
   const junctions = junctionPoints(circuit);
 
   const refHandlePos = (p: Probe): Point | null => {
-    if (p.kind !== 'v' || !p.nodeAt) return null;
+    if ((p.kind !== 'v' && p.kind !== 'p') || !p.nodeAt) return null;
     return p.refAt ?? [p.nodeAt[0] + REF_HANDLE_OFFSET[0], p.nodeAt[1] + REF_HANDLE_OFFSET[1]];
   };
 
@@ -256,7 +256,7 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
         const onSomething = isConnectionPoint(circuit, sp);
         if (d.handle === 'ref') {
           if (onSomething && !(pr.nodeAt && sp[0] === pr.nodeAt[0] && sp[1] === pr.nodeAt[1])) dispatch({ type: 'updateProbe', id: pr.id, patch: { refAt: sp } });
-          else if (pr.refAt) dispatch({ type: 'updateProbe', id: pr.id, patch: { refAt: undefined } });
+          else if (pr.refAt && pr.kind === 'v') dispatch({ type: 'updateProbe', id: pr.id, patch: { refAt: undefined } });
         } else if (onSomething && pr.nodeAt && (sp[0] !== pr.nodeAt[0] || sp[1] !== pr.nodeAt[1])) {
           dispatch({ type: 'updateProbe', id: pr.id, patch: { nodeAt: sp } });
         }
@@ -437,8 +437,18 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
           const nx = -(b.y - a.y), ny = b.x - a.x;
           const nl = Math.hypot(nx, ny) || 1;
           const ox = mx + (nx / nl) * 14, oy = my + (ny / nl) * 14;
+          const wm = pr.kind === 'p' && pr.nodeAt ? { node: dragging?.handle === 'node' ? dragging.current : pr.nodeAt, ref: dragging?.handle === 'ref' ? dragging.current : (pr.refAt ?? refHandlePos(pr)!) } : null;
           return (
             <g key={pr.id} className={`probe${sel ? ' selected' : ''}`} style={{ color }}>
+              {wm && (
+                <g>
+                  <line x1={wm.node[0]} y1={wm.node[1]} x2={wm.ref[0]} y2={wm.ref[1]} className="probe-ref-line" />
+                  <line x1={wm.node[0]} y1={wm.node[1]} x2={ox} y2={oy} className="probe-ref-line" />
+                  <circle cx={wm.ref[0]} cy={wm.ref[1]} r={4} className={`probe-ref${pr.refAt ? ' active' : ''}`}><title>Wattmeter − voltage terminal (drag)</title></circle>
+                  <circle cx={wm.node[0]} cy={wm.node[1]} r={5} className="probe-node"><title>Wattmeter + voltage terminal (drag)</title></circle>
+                  <text x={wm.node[0]} y={wm.node[1] + 3} textAnchor="middle" className="probe-letter">W</text>
+                </g>
+              )}
               <g transform={`translate(${ox} ${oy}) rotate(${ang})`}
                  onClick={(e) => { e.stopPropagation(); dispatch({ type: 'updateProbe', id: pr.id, patch: { dir: dir === 1 ? -1 : 1 } }); }}>
                 <title>Reference direction — click the arrow to flip it</title>

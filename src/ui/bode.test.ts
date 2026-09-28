@@ -55,3 +55,13 @@ describe('E5 Bode traces', () => {
     expect(Math.abs(hi - 1051200) / 1051200).toBeLessThan(0.005);
   });
 });
+
+describe('E7 power in a Frequency sweep', () => {
+  const { circuit, ex, r } = sweep('E7');
+  const { power, reactive } = tracesFromAc(circuit, ex, r);
+  it('the wattmeter probe gives P = 0.4385 µW and Q = −5.583 µVAR at 1 MHz', () => {
+    expect(power).toHaveLength(1);
+    expect(valueAt(power[0], 1e6)).toBeCloseTo(4.385e-7, 10);
+    expect(valueAt(reactive[0], 1e6)).toBeCloseTo(-5.583e-6, 9);
+  });
+});

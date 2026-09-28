@@ -1,5 +1,5 @@
 /** Right panel: parameters of the selected part / probe, with the parsed value shown beside each field. */
-import type { Circuit, Part, Probe } from '../schematic/model';
+import { pinPositions, type Circuit, type Part, type Probe } from '../schematic/model';
 import { describeValue, formatSI, parseValue } from '../engine/units';
 import type { Action, Selection } from './state';
 import { PART_NAMES } from './symbols';
@@ -46,7 +46,7 @@ export function Inspector({ circuit, selection, dispatch, nodeAt }: { circuit: C
   const probe = selection.probes.length === 1 ? circuit.probes.find((p) => p.id === selection.probes[0]) : undefined;
 
   if (part) return <PartInspector part={part} circuit={circuit} dispatch={dispatch} />;
-  if (probe) return <ProbeInspector probe={probe} dispatch={dispatch} nodeAt={nodeAt} />;
+  if (probe) return <ProbeInspector probe={probe} circuit={circuit} dispatch={dispatch} nodeAt={nodeAt} />;
   const n = selection.parts.length + selection.wires.length + selection.probes.length;
   return (
     <aside className="inspector">
@@ -118,7 +118,7 @@ function PartInspector({ part, circuit, dispatch }: { part: Part; circuit: Circu
   );
 }
 
-function ProbeInspector({ probe, dispatch, nodeAt }: { probe: Probe; dispatch: (a: Action) => void; nodeAt: (p: [number, number]) => string | undefined }) {
+function ProbeInspector({ probe, circuit, dispatch, nodeAt }: { probe: Probe; circuit: Circuit; dispatch: (a: Action) => void; nodeAt: (p: [number, number]) => string | undefined }) {
   const set = (patch: Partial<Probe>) => dispatch({ type: 'updateProbe', id: probe.id, patch });
   const nodeOf = (pt?: [number, number]) => (pt ? nodeAt(pt) ?? '(not on a wire)' : '—');
   return (
@@ -136,8 +136,19 @@ function ProbeInspector({ probe, dispatch, nodeAt }: { probe: Probe; dispatch: (
       {(probe.kind === 'i' || probe.kind === 'p') && (
         <>
           <p>On part <b>{probe.element}</b>.</p>
-          {probe.kind === 'i' && <button onClick={() => set({ dir: (probe.dir ?? 1) === 1 ? -1 : 1 })}>Flip reference direction</button>}
-          <p className="muted">{probe.kind === 'i' ? 'A negative reading means the current actually flows against the arrow.' : 'Power absorbed by the part; negative means it is delivering power.'}</p>
+          <button onClick={() => set({ dir: (probe.dir ?? 1) === 1 ? -1 : 1 })}>Flip reference direction</button>
+          {probe.kind === 'p' && (probe.nodeAt
+            ? <>
+                <p>Wattmeter: voltage from <b>{nodeOf(probe.nodeAt)}</b> to <b>{probe.refAt ? nodeOf(probe.refAt) : 'ground'}</b>, current through <b>{probe.element}</b>. Drag the two voltage handles on the drawing.</p>
+                <button onClick={() => set({ nodeAt: undefined, refAt: undefined })}>Use the part's own voltage instead</button>
+              </>
+            : <button onClick={() => {
+                const part = circuit.parts.find((x) => x.id === probe.element);
+                if (!part) return;
+                const pins = pinPositions(part);
+                set({ nodeAt: [pins[0].x, pins[0].y], refAt: [pins[1].x, pins[1].y] });
+              }} title="A wattmeter senses current through this part but can measure voltage across a bigger piece of the circuit">Make it a wattmeter (separate voltage points)</button>)}
+          <p className="muted">{probe.kind === 'i' ? 'A negative reading means the current actually flows against the arrow.' : 'Power absorbed (passive sign convention); negative means it is delivering power. In a Time run the table under the plot gives the average over whole cycles; in a Frequency sweep the power panel shows the average power at each frequency.'}</p>
         </>
       )}
     </aside>
