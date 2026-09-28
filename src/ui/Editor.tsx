@@ -48,6 +48,8 @@ export function Editor() {
   const [cursors, setCursors] = useState<{ a: number | null; b: number | null }>({ a: null, b: null });
   const [cursorX, setCursorX] = useState<number | null>(null);
   const [autoRerun, setAutoRerun] = useState(true);
+  /** re-fit the drawing once the plot panel first takes space away from it */
+  const firstPlot = useRef(true);
   /** last Time/Frequency run, so adding a probe can reuse it without re-solving */
   const lastRun = useRef<{ sig: string; ex: Extraction; result: TranResult; ms: number } | null>(null);
   const tranSignature = (c: Circuit) => JSON.stringify({ p: c.parts, w: c.wires.map((w) => [w.from, w.to]), a: c.analysis });
@@ -55,7 +57,7 @@ export function Editor() {
   const loadCircuit = useCallback((c: Circuit, message?: string) => {
     dispatch({ type: 'load', circuit: c });
     setReadouts({}); setPartInfo({}); setHighlight(new Set()); setNeedsGround(false);
-    setTraces([]); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null;
+    setTraces([]); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
     hasRun.current = false;
     setStatus(message ? { kind: 'info', text: message } : null);
     setTimeout(() => setFitRequest((n) => n + 1), 0);
@@ -152,6 +154,7 @@ export function Editor() {
         setTraces(tr);
         setPlotOpen(true);
         setPartInfo({});
+        if (firstPlot.current) { firstPlot.current = false; setTimeout(() => setFitRequest((n) => n + 1), 50); }
         setStatus({ kind: 'ok', text: `Time analysis solved: ${r.t.length.toLocaleString()} points, step ${formatSI(r.dt, 's')}, ${ms.toFixed(1)} ms.${notes.length ? ' ' + notes.join(' ') : ''}` });
       } else {
         const n = out.result.f.length;

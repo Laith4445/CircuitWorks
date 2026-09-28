@@ -1,6 +1,6 @@
 # STATUS.md — where CircuitWorks stands
 
-_Last updated: 2026-09-28 (session 2, milestone M1)._
+_Last updated: 2026-09-28 (session 2, milestones M1 and M2)._
 
 ## What works
 - **M0, the solver, is done and proven** (123 automated checks: every book value, plus
@@ -29,10 +29,19 @@ _Last updated: 2026-09-28 (session 2, milestone M1)._
     anywhere rebuilds the drawing. Save/Open a .json file. Autosave restores
     unsaved work after a crash or reload.
   - Examples… menu loads any of the seven book exercises.
+- **M2, Time analysis on screen, is built.** Pick the **Time** tab, set the end
+  time, press Run. A plot panel opens under the run bar with one trace per
+  probe in the probe's colour. Hover the plot to read every trace at that
+  instant (the schematic badges follow the cursor too); click to pin cursor A,
+  click again for B, and a small table shows A, B and the difference.
+  **Keep** freezes the current traces as dashed ghosts so the next run draws on
+  top (that is the E4 damping comparison). The time step is chosen
+  automatically and shown greyed in the Step box; type your own to override.
+  Adding a probe after a run shows its trace at once without re-solving.
 - The Self-Check page (`/#/selfcheck`) still shows 51 of 51 green.
 
 ## How to check it (plain language)
-1. In the project folder run `npm test` — expect **142 tests passed, 0 failed**.
+1. In the project folder run `npm test` — expect **153 tests passed, 0 failed**.
 2. Run `npm run dev` and open the address it prints (http://localhost:5173).
 3. **Build E1 from nothing:** press V, Space, click to place the source. Press R,
    Space, click, four times for the resistors. Press G, click, for the ground.
@@ -54,13 +63,23 @@ book's V_R3). Opened a Share link in a second tab and got the same circuit and
 answer. Deleted the ground, saw the message and the one-click fix, and got the
 answer back.
 
-## What's next (M2 — Time)
-Pulse/step sources already exist in the solver; M2 adds the plot panel with
-cursors and the "Keep" overlay so E3 (op amp) and E4 (three damping cases on
-one plot) can be checked on screen.
+## How to check M2
+1. Examples… → **E4**, press Run. The plot shows v_C rising smoothly to about
+   20 V at 0.2 s. Hover near 0.1 s: the readout says about 12.4 V.
+2. Click **Keep**. Double-click R1, type `2`, Enter. The plot re-runs by itself:
+   a new curve overshoots to a peak; hover the peak and read **≈ 37.4 V** near
+   176 ms. The old curve stays as a dashed ghost.
+3. Keep again, set R1 to `10.954`, and you have all three damping cases on one plot.
+4. Examples… → **E3**, Run. Two traces: v_in steps 0→1 V, v_out steps 0→2 V at
+   the same instants. Hover anywhere the pulse is high: v_out = 2 V exactly.
+
+## What's next (M3 — Frequency)
+The AC sweep already solves; M3 adds the two-panel Bode plot (magnitude in dB,
+phase in degrees on a log axis), the transfer-function "ratio" probe, and
+cursors that find the half-power frequencies for E5.
 
 ## Known limitations / open questions
-- Time and Frequency runs solve but show no plot yet (M2/M3). The run bar says so.
+- Frequency runs solve but show no plot yet (M3). The run bar says so.
 - Op amp is ideal, no saturation (SPEC §4.2).
 - Node names in probe tooltips are automatic (n1, n2…); editable labels come later.
 - The Playwright browser test for E1 is deferred (see DECISIONS.md); the same

@@ -24,3 +24,9 @@ Format: date · decision · why. Newest at the bottom.
 - 2026-09-28 · "New" and "Restore unsaved circuit?" use the browser's built-in confirm dialog for now (the only modal dialogs in the app).
 - 2026-09-28 · Time and Frequency runs work from the run bar in M1 but only report "solved (N points)"; the plot panel is M2.
 - 2026-09-28 · Playwright smoke test (SPEC §7.3) deferred: it needs a browser download; the E1-from-blank-canvas check was done by hand in the built-in browser this session. Add it in M6 with the README.
+- 2026-09-28 · M2 plots are a hand-rolled SVG plotter (SPEC §4.4 allows it) behind `src/ui/plot/Plot.tsx`, no uPlot. Reason: full control of cursors, kept traces and the two-panel Bode layout coming in M3, and one less dependency. Big traces are thinned to the min/max per pixel column so peaks survive.
+- 2026-09-28 · Cursor readouts on the schematic: during a Time run each probe badge shows the value at the plot cursor (hover or pinned A), otherwise the value at the end of the run. The tooltip says which.
+- 2026-09-28 · Adding, moving or re-labelling a probe after a Time run rebuilds the traces from the last result without re-solving (SPEC E3 "unlocks"). Any change to parts, wires or analysis settings re-solves.
+- 2026-09-28 · Time re-runs automatically after an edit only when the last run took under 300 ms and the "auto" box in the run bar is ticked (SPEC §6.1). Otherwise press Run.
+- 2026-09-28 · The time step field lives in the run bar as "Step", blank by default with the derived value as placeholder, instead of an "Advanced" disclosure. One field, no extra click.
+- 2026-09-28 · No backward-Euler fallback was needed: E6's switch transient shows no trapezoidal ringing thanks to the exact t = 0⁺ solve.
