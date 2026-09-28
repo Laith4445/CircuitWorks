@@ -23,7 +23,7 @@
   ],
   "probes": [
     {"id":"P1","kind":"v","nodeAt":[70,60],"refAt":[150,60],"label":"V_R1"},
-    {"id":"P2","kind":"v","nodeAt":[150,60],"label":"V_R2"},
+    {"id":"P2","kind":"v","nodeAt":[160,80],"label":"V_R2"},
     {"id":"P3","kind":"v","nodeAt":[150,60],"refAt":[240,60],"label":"V_R3"}
   ],
   "analysis": {"kind":"dc"},
