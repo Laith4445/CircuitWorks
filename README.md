@@ -5,6 +5,10 @@ A small, free, browser-based circuit simulator built around the exercises in
 circuit from the book, press Run, and read the answers on the drawing. No
 account, no server, no install: the whole app is static files.
 
+**Live app:** https://laith4445.github.io/CircuitWorks/ (Self-Check page:
+https://laith4445.github.io/CircuitWorks/#/selfcheck). Every push to `main`
+rebuilds it.
+
 **Status:** prototype. All seven proof-of-concept exercises (DC, dependent
 sources, op amps, transients, frequency sweeps, switches, power) run and match
 the book's answers. See `STATUS.md` for what works and how to check it.

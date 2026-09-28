@@ -2,6 +2,12 @@
 
 _Last updated: 2026-09-28 (session 2, milestones M1–M6)._
 
+## Where it lives
+- Code: https://github.com/Laith4445/CircuitWorks (public).
+- Live app: https://laith4445.github.io/CircuitWorks/ — rebuilt automatically
+  on every push to `main` (the workflow also runs the tests first; a red test
+  blocks the deploy).
+
 ## What works
 - **M0, the solver, is done and proven** (123 automated checks: every book value, plus
   current balance at every node, power balance, and an energy check). Unchanged this session.
@@ -137,9 +143,9 @@ answer back.
 3. Run `npm run test:e2e` in the project folder: **1 passed**.
 
 ## What's next
-All six milestones are done. Open questions for the authors (SPEC §10): the
-name, hosting on GitHub Pages, confirming the E6 circuit reading, the peak
-amplitude convention, and whether the exercise panel belongs in the student app.
+All six milestones are done and the app is live on GitHub Pages. Open questions
+for the authors (SPEC §10): the name, confirming the E6 circuit reading, the
+peak amplitude convention, and whether the exercise panel belongs in the student app.
 Still to do before a wider release: a 2-minute demo GIF, a Chromebook test, and
 a pass on the exercise layouts so the example drawings look tidy.
 
