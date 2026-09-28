@@ -18,7 +18,7 @@ import { lowestPoint } from './geometry';
 import { HOTKEYS } from './symbols';
 import { Plot } from './plot/Plot';
 import { Bode } from './plot/Bode';
-import { tracesFromTran, tracesFromAc, valueAt, type Trace } from './traces';
+import { tracesFromTran, tracesFromAc, initialReadouts, valueAt, type Trace, type InitialReadout } from './traces';
 import { nextProbeId } from './state';
 import { nextId } from './state';
 
@@ -49,6 +49,8 @@ export function Editor() {
   const [ac, setAc] = useState<{ mag: Trace[]; phase: Trace[] }>({ mag: [], phase: [] });
   const [kept, setKept] = useState<Trace[]>([]);
   const [db, setDb] = useState(true);
+  const [initial, setInitial] = useState<InitialReadout[]>([]);
+  const [tEndLabel, setTEndLabel] = useState('');
   const [plotOpen, setPlotOpen] = useState(true);
   const [cursors, setCursors] = useState<{ a: number | null; b: number | null }>({ a: null, b: null });
   const [cursorX, setCursorX] = useState<number | null>(null);
@@ -62,7 +64,7 @@ export function Editor() {
   const loadCircuit = useCallback((c: Circuit, message?: string) => {
     dispatch({ type: 'load', circuit: c });
     setReadouts({}); setPartInfo({}); setHighlight(new Set()); setNeedsGround(false);
-    setTraces([]); setAc({ mag: [], phase: [] }); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
+    setTraces([]); setInitial([]); setAc({ mag: [], phase: [] }); setKept([]); setCursors({ a: null, b: null }); lastRun.current = null; firstPlot.current = true;
     hasRun.current = false;
     setStatus(message ? { kind: 'info', text: message } : null);
     setTimeout(() => setFitRequest((n) => n + 1), 0);
@@ -157,6 +159,8 @@ export function Editor() {
         lastRun.current = { sig: tranSignature(circuit), ex, result: r, ms };
         const tr = tracesFromTran(circuit, ex, r);
         setTraces(tr);
+        setInitial(initialReadouts(circuit, ex, r));
+        setTEndLabel(formatSI(r.t[r.t.length - 1], 's'));
         setAc({ mag: [], phase: [] });
         setPlotOpen(true);
         setPartInfo({});
@@ -200,7 +204,7 @@ export function Editor() {
     if ((kind === 'tran' || kind === 'ac') && lastRun.current && lastRun.current.result.kind === kind) {
       const lr = lastRun.current;
       if (lr.sig === tranSignature(state.circuit)) {
-        if (lr.result.kind === 'tran') setTraces(tracesFromTran(state.circuit, lr.ex, lr.result));
+        if (lr.result.kind === 'tran') { setTraces(tracesFromTran(state.circuit, lr.ex, lr.result)); setInitial(initialReadouts(state.circuit, lr.ex, lr.result)); }
         else setAc(tracesFromAc(state.circuit, lr.ex, lr.result));
         return;
       }
@@ -358,6 +362,21 @@ export function Editor() {
           </div>
           {plotOpen && ac.mag.length > 0 && (
             <Bode mag={[...kept.filter((t) => t.panel === 'mag'), ...ac.mag]} phase={[...kept.filter((t) => t.panel === 'phase'), ...ac.phase]} db={db} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />
+          )}
+          {plotOpen && ac.mag.length === 0 && initial.length > 0 && (
+            <table className="initial-table" title="Just before t = 0: switches in their starting state, steady state. Just after: switches flipped; capacitor voltages and inductor currents can't jump, everything else can.">
+              <thead><tr><th>Probe</th><th>just before t = 0 (0⁻)</th><th>just after (0⁺)</th><th>end of run (t = {tEndLabel})</th></tr></thead>
+              <tbody>
+                {initial.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ color: row.color }}>{row.label}</td>
+                    <td>{formatSI(row.before, row.unit, 4)}</td>
+                    <td>{formatSI(row.after, row.unit, 4)}</td>
+                    <td>{formatSI(row.end, row.unit, 4)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
           {plotOpen && ac.mag.length === 0 && (
             <Plot traces={[...kept.filter((t) => !t.panel), ...traces]} xLabel="t" xUnit="s" yLabel={[...new Set(traces.map((t) => t.unit))].join(' / ')} onCursor={setCursorX} cursors={cursors} onCursors={setCursors} />

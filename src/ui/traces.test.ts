@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EXERCISES } from '../exercises';
 import { extract, parseAnalysis } from '../schematic/extract';
 import { run, type TranResult } from '../engine';
-import { tracesFromTran, valueAt } from './traces';
+import { tracesFromTran, initialReadouts, valueAt } from './traces';
 import type { Circuit } from '../schematic/model';
 
 function tran(id: string) {
@@ -35,5 +35,34 @@ describe('traces from a Time run', () => {
     expect(iL.unit).toBe('A');
     expect(valueAt(iL, 0)).toBeCloseTo(0.03921, 4);
     expect(valueAt(vC, 0)).toBeCloseTo(-4.3135, 3);
+  });
+});
+
+describe('E6 initial-conditions table (before / just after / end)', () => {
+  const { circuit, ex, r } = tran('E6');
+  const rows = Object.fromEntries(initialReadouts(circuit, ex, r).map((x) => [x.label, x]));
+  it('lists all five probes', () => {
+    expect(Object.keys(rows).sort()).toEqual(['V_N', 'i_C', 'i_L', 'v_C', 'v_L']);
+  });
+  it('i_L is continuous: 39.21 mA before and just after, 5.949 mA at the end', () => {
+    expect(rows.i_L.before).toBeCloseTo(0.03921, 4);
+    expect(rows.i_L.after).toBeCloseTo(0.03921, 4);
+    expect(rows.i_L.end).toBeCloseTo(0.005949, 5);
+  });
+  it('v_C is continuous: −4.3135 V before and after, −0.6544 V at the end', () => {
+    expect(rows.v_C.before).toBeCloseTo(-4.3135, 3);
+    expect(rows.v_C.after).toBeCloseTo(-4.3135, 3);
+    expect(rows.v_C.end).toBeCloseTo(-0.6544, 3);
+  });
+  it('i_C and v_L jump: 0 before, 33.69 mA and −3.369 V just after', () => {
+    expect(Math.abs(rows.i_C.before)).toBeLessThan(1e-9);
+    expect(Math.abs(rows.v_L.before)).toBeLessThan(1e-9);
+    expect(rows.i_C.after).toBeCloseTo(0.03369, 4);
+    expect(rows.v_L.after).toBeCloseTo(-3.369, 2);
+  });
+  it('V(N) jumps from 0.3865 V to 3.7556 V and settles at 4.0456 V', () => {
+    expect(rows.V_N.before).toBeCloseTo(0.3865, 3);
+    expect(rows.V_N.after).toBeCloseTo(3.7556, 3);
+    expect(rows.V_N.end).toBeCloseTo(4.0456, 3);
   });
 });

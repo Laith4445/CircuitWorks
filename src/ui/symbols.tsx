@@ -95,7 +95,7 @@ export function displayValue(part: Part): string {
     case 'Idc': return `${p.I ?? ''}A`;
     case 'Vwave': return p.type === 'sine' ? `sine ${p.va ?? ''}V pk ${p.f ?? ''}Hz` : p.type === 'step' ? `step ${p.v1 ?? ''}→${p.v2 ?? ''}V` : `pulse ${p.v1 ?? ''}→${p.v2 ?? ''}V`;
     case 'VCVS': case 'CCVS': case 'VCCS': case 'CCCS': return `×${p.gain ?? ''} (${p.ctrl || '?'})`;
-    case 'SW': return p.init === 'closed' ? 'closed → opens at t=0' : 'open → closes at t=0';
+    case 'SW': return (p.toggle ?? 'true') === 'false' ? (p.init === 'closed' ? 'closed' : 'open') : p.init === 'closed' ? 'closed, opens at t=0' : 'open, closes at t=0';
     default: return '';
   }
 }

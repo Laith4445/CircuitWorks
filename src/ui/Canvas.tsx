@@ -276,7 +276,13 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
   function onDoubleClick(e: React.MouseEvent<SVGSVGElement>) {
     const p = toWorld(e.clientX, e.clientY);
     const hit = hitTest(circuit, p);
-    if (hit.kind === 'part' || hit.kind === 'pin') startEdit(hit.part);
+    if (hit.kind !== 'part' && hit.kind !== 'pin') return;
+    if (hit.part.type === 'SW') {
+      const init = (hit.part.params?.init ?? 'open') === 'closed' ? 'open' : 'closed';
+      dispatch({ type: 'setParam', id: hit.part.id, name: 'init', value: init });
+      return;
+    }
+    startEdit(hit.part);
   }
 
   function startEdit(part: Part) {
@@ -364,7 +370,7 @@ export function Canvas({ state, dispatch, readouts, highlight, partInfo, fitRequ
         const info = partInfo[part.id];
         return (
           <g key={part.id} className={`part${sel ? ' selected' : ''}${hl ? ' highlight' : ''}`}>
-            {info && <title>{info}</title>}
+            {info ? <title>{info}</title> : part.type === 'SW' ? <title>{`${part.id}: ${(part.params?.init ?? 'open') === 'closed' ? 'closed' : 'open'} before t = 0${(part.params?.toggle ?? 'true') !== 'false' ? ', flips at t = 0 in a Time run' : ''}. Double-click to flip.`}</title> : null}
             <g transform={`translate(${pos[0]} ${pos[1]}) rotate(${part.rot ?? 0}) scale(${part.flip ? -1 : 1} 1)`}>
               <Symbol part={part} />
             </g>

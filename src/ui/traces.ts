@@ -1,5 +1,5 @@
 /** Turn a solver result into one trace per probe (pure; tested in Node). */
-import type { AcResult, TranResult } from '../engine';
+import type { AcResult, DcResult, TranResult } from '../engine';
 import type { Circuit } from '../schematic/model';
 import type { Extraction } from '../schematic/extract';
 import { probeColor, probeLetter } from './state';
@@ -123,4 +123,41 @@ export function valueAt(t: Trace, x: number): number {
   while (hi - lo > 1) { const m = (lo + hi) >> 1; if (xs[m] <= x) lo = m; else hi = m; }
   const f = (x - xs[lo]) / (xs[hi] - xs[lo] || 1);
   return ys[lo] + f * (ys[hi] - ys[lo]);
+}
+
+/** Value of a probe from a DC (operating-point) result, with the unit. */
+export function probeValueDc(circuit: Circuit, ex: Extraction, dc: DcResult, id: string): { value: number; unit: string } | null {
+  const pr = circuit.probes.find((p) => p.id === id);
+  if (!pr) return null;
+  if (pr.kind === 'v' && pr.nodeAt) {
+    const n = ex.nodeAtPoint(pr.nodeAt);
+    const ref = pr.refAt ? ex.nodeAtPoint(pr.refAt) : '0';
+    if (n === undefined || ref === undefined || dc.v[n] === undefined || dc.v[ref] === undefined) return null;
+    return { value: dc.v[n] - dc.v[ref], unit: 'V' };
+  }
+  if ((pr.kind === 'i' || pr.kind === 'p') && pr.element && dc.i[pr.element] !== undefined) {
+    const el = ex.netlist.elements.find((e) => e.id === pr.element)!;
+    const i = dc.i[pr.element];
+    if (pr.kind === 'i') return { value: i * (pr.dir ?? 1), unit: 'A' };
+    return { value: (dc.v[el.nodes[0]] - dc.v[el.nodes[1]]) * i, unit: 'W' };
+  }
+  return null;
+}
+
+export interface InitialReadout { id: string; label: string; color: string; unit: string; before: number; after: number; end: number }
+
+/**
+ * The "initial conditions" table for a Time run: each probe just before t = 0
+ * (switches in their starting state), just after (switches flipped, capacitor
+ * voltages and inductor currents carried over), and at the end of the run.
+ */
+export function initialReadouts(circuit: Circuit, ex: Extraction, r: TranResult): InitialReadout[] {
+  const out: InitialReadout[] = [];
+  const traces = tracesFromTran(circuit, ex, r);
+  for (const t of traces) {
+    const before = probeValueDc(circuit, ex, r.op0, t.id);
+    if (!before) continue;
+    out.push({ id: t.id, label: t.label, color: t.color, unit: t.unit, before: before.value, after: t.y[0], end: t.y[t.y.length - 1] });
+  }
+  return out;
 }

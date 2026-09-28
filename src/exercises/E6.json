@@ -36,7 +36,10 @@
   ],
   "probes": [
     {"id":"P1","kind":"v","nodeAt":[260,145],"refAt":[130,40],"label":"v_C"},
-    {"id":"P2","kind":"i","element":"L1","label":"i_L"}
+    {"id":"P2","kind":"i","element":"L1","label":"i_L"},
+    {"id":"P3","kind":"i","element":"C1","label":"i_C"},
+    {"id":"P4","kind":"v","nodeAt":[220,60],"refAt":[220,100],"label":"v_L"},
+    {"id":"P5","kind":"v","nodeAt":[150,200],"label":"V_N"}
   ],
   "analysis": {"kind":"tran","tEnd":"2ms"},
   "labels": [
